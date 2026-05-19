@@ -27,7 +27,7 @@ class TestBetaMeanVar:
         assert math.isclose(d.var(), 0.01, rel_tol=1e-6)
 
     def test_var_too_large_raises(self):
-        with pytest.raises(ValueError, match="variance too large"):
+        with pytest.raises(ValueError, match=r"var < mu\*\(1-mu\)"):
             make_dist("beta", mean=0.5, var=0.3)
 
 

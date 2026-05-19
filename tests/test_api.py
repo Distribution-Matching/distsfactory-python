@@ -7,7 +7,7 @@ from distsfactory import make_dist, dist_exists, available_distributions
 class TestMakeDistErrors:
     def test_unknown_distribution(self):
         with pytest.raises(ValueError, match="Unknown distribution"):
-            make_dist("pareto", mean=5)
+            make_dist("not_a_real_distribution", mean=5)
 
     def test_no_spec(self):
         with pytest.raises(ValueError, match="at least one"):

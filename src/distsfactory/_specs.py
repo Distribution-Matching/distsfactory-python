@@ -66,6 +66,18 @@ class ModeIQRSpec:
     iqr: float
 
 
+@dataclass(frozen=True)
+class ModeSpec:
+    mode: float
+
+
+@dataclass(frozen=True)
+class MeanVarModeSpec:
+    mean: float
+    var: float
+    mode: float
+
+
 def parse_spec(
     *,
     mean: Optional[float] = None,
@@ -126,6 +138,8 @@ def parse_spec(
 
     # Mode-based specs
     if mode is not None:
+        if mean is not None and var is not None:
+            return MeanVarModeSpec(mean, var, mode)
         if mean is not None and var is None:
             return MeanModeSpec(mean, mode)
         if var is not None:
@@ -138,6 +152,7 @@ def parse_spec(
             return ModeQuantileSpec(mode, 0.75, q3)
         if iqr is not None:
             return ModeIQRSpec(mode, iqr)
+        return ModeSpec(mode)
 
     # Quantile-based specs
     if quantiles is not None:

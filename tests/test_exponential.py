@@ -26,7 +26,7 @@ class TestExponentialMeanVar:
         assert math.isclose(d.mean(), 2.5, rel_tol=1e-6)
 
     def test_inconsistent_raises(self):
-        with pytest.raises(ValueError, match="must equal mean"):
+        with pytest.raises(ValueError, match=r"var = mu\^2"):
             make_dist("exponential", mean=2.5, var=1.5)
 
 
