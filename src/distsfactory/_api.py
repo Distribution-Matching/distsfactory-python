@@ -1,10 +1,45 @@
 """Public API: ``make_dist``, ``dist_exists``, ``available_distributions``."""
 
+import math
+
 from ._registry import resolve_dist, DISTRIBUTIONS, SUPPORT_TYPE
 from ._distributions import DIST_HANDLERS
 from ._feasibility import exists_mean_var as _exists_mean_var
 from ._specs import parse_spec, MeanVarSpec
 from ._support import dist_on_support as _dist_on_support
+
+
+_SUPPORT_STRINGS = {
+    "real", "positive", "unit", "integer_nonneg", "integer_bounded"
+}
+
+
+def _classify_support(support):
+    """Classify a tuple/range/string into a natural-support category."""
+    if isinstance(support, str):
+        if support not in _SUPPORT_STRINGS:
+            raise ValueError(
+                f"Unknown support string {support!r}. "
+                f"Use one of {sorted(_SUPPORT_STRINGS)}."
+            )
+        return support
+    if isinstance(support, range):
+        if support.start == 0:
+            return "integer_nonneg" if support.stop > 10 ** 9 else "integer_bounded"
+        return "integer_bounded"
+    if isinstance(support, tuple) and len(support) == 2:
+        lo, hi = float(support[0]), float(support[1])
+        if math.isinf(lo) and lo < 0 and math.isinf(hi) and hi > 0:
+            return "real"
+        if lo == 0 and math.isinf(hi):
+            return "positive"
+        if lo == 0 and hi == 1:
+            return "unit"
+        return None  # bounded non-unit: no candidates by natural support
+    raise ValueError(
+        f"Unsupported support type {type(support).__name__}. "
+        f"Use a 2-tuple, range, or category string."
+    )
 
 
 def make_dist(dist, support=None, **kwargs):
@@ -113,13 +148,24 @@ def dist_exists(dist, **kwargs):
 def available_distributions(support=None, **kwargs):
     """List distributions feasible for the given constraints.
 
+    Mirrors Julia's ``available_distributions(support; kwargs...)``.
+
     Parameters
     ----------
-    support : str or None
-        Optional natural-support filter. One of ``"real"``, ``"positive"``,
-        ``"unit"``, ``"integer_nonneg"``, ``"integer_bounded"``. When set,
-        restricts the candidate pool to distributions with that natural
-        support.
+    support : tuple, range, str, or None
+        Optional support filter. Accepts:
+
+        - A 2-tuple ``(lo, hi)`` of endpoints (use ``math.inf`` for unbounded).
+          The shape is classified to a natural-support category:
+          ``(-inf, inf)`` -> ``"real"``,
+          ``(0, inf)``   -> ``"positive"``,
+          ``(0, 1)``     -> ``"unit"``,
+          bounded otherwise.
+        - A ``range`` object: classified as discrete bounded (or non-negative
+          unbounded when ``stop`` is ``sys.maxsize``-like).
+        - A string: one of ``"real"``, ``"positive"``, ``"unit"``,
+          ``"integer_nonneg"``, ``"integer_bounded"``.
+        - ``None``: no filter.
     **kwargs
         Specification keywords (same as ``make_dist``). When omitted, returns
         all candidates for the given support (or all distributions if
@@ -132,15 +178,20 @@ def available_distributions(support=None, **kwargs):
 
     Examples
     --------
+    >>> import math
     >>> from distsfactory import available_distributions
     >>> "gamma" in available_distributions(mean=5, var=3)
     True
     >>> "beta" in available_distributions(support="unit")
     True
+    >>> "gamma" in available_distributions(support=(0, math.inf), mean=5, var=3)
+    True
     """
     candidates = list(DIST_HANDLERS.keys())
     if support is not None:
-        candidates = [n for n in candidates if SUPPORT_TYPE.get(n) == support]
+        natural = _classify_support(support)
+        if natural is not None:
+            candidates = [n for n in candidates if SUPPORT_TYPE.get(n) == natural]
 
     if not kwargs:
         return candidates
