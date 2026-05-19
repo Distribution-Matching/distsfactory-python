@@ -31,9 +31,10 @@ d = make_dist(st.gamma, mean=5, var=3)
 
 # Truncated Normal on [-1, 4] with mean 1 and standard deviation 0.8
 d = make_dist("normal", mean=1.0, std=0.8, support=(-1, 4))
-d.mean()           # 1.0
-d.std()            # 0.8
-d.pdf(1)           # density at 1
+d.mean(), d.std()          # (1.0, 0.8)  — moments after truncation
+d._inner.kwds              # {'loc': 0.9822, 'scale': 0.8232}
+                           # — parent Normal(μ, σ) solved so the truncated
+                           #   distribution hits the requested (mean, std)
 ```
 
 ## Supported distributions
