@@ -348,7 +348,13 @@ def _dispatch_discrete(name, mu, var, lo, hi):
 def _truncate_real(name, mu, var, lo, hi):
     """Truncate a real-line distribution to ``[lo, hi]`` and match moments."""
     from ._truncation_solvers import solve_truncated_locscale, solve_truncated_generic
+    from ._feasibility import why_not_truncated_locscale
     if name in ("normal", "laplace", "logistic"):
+        # Tight feasibility check via the Langevin envelope — surfaces a clean
+        # ValueError naming the dome boundary before Newton starts.
+        reason = why_not_truncated_locscale(name, mu, var, lo, hi)
+        if reason is not None:
+            raise ValueError(reason)
         return solve_truncated_locscale(name, lo, hi, mu, var)
     return solve_truncated_generic(name, lo, hi, mu, var)
 

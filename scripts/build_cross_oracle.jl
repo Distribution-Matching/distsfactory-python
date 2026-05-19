@@ -26,6 +26,17 @@ struct Case
     kwargs::NamedTuple       # kwargs to pass to make_dist (must round-trip to Python identically)
 end
 
+# A feasibility check oracle entry: same shape as a constructor case, but
+# records `dist_exists(...)`'s bool answer instead of moments. Used by the
+# Python pytest to verify both packages agree on the feasibility region.
+struct FeasibilityCase
+    py_name::String
+    julia_type::Any            # Type or Distribution instance
+    kwargs::NamedTuple
+    julia_support::Any         # nothing, an Interval, or a UnitRange
+    py_support::Any            # nothing, [lo, hi] tuple, or {start, stop} dict
+end
+
 # ---------------------------------------------------------------------------
 # Battery of test cases
 # ---------------------------------------------------------------------------
@@ -120,6 +131,55 @@ const CASES = Case[
     Case("discrete_triangular",     DiscreteTriangular,         (mean=5.0, var=2.0, mode=5.0)),
 ]
 
+# Feasibility-region oracle: each case records the bool that `dist_exists`
+# returns on each side. Mix of in-region, on-the-boundary, and out-of-region
+# inputs so the Python predicate is forced to match Julia case-by-case.
+const FEAS_CASES = FeasibilityCase[
+    # Beta: var < mu*(1-mu)
+    FeasibilityCase("beta",        Beta,        (mean=0.5,  var=0.1),   nothing, nothing),
+    FeasibilityCase("beta",        Beta,        (mean=0.5,  var=0.3),   nothing, nothing),
+    FeasibilityCase("beta",        Beta,        (mean=1.5,  var=0.1),   nothing, nothing),
+
+    # Exponential: var must equal mean^2
+    FeasibilityCase("exponential", Exponential, (mean=2.5,  var=6.25),  nothing, nothing),
+    FeasibilityCase("exponential", Exponential, (mean=2.5,  var=1.5),   nothing, nothing),
+
+    # Poisson: var must equal mean
+    FeasibilityCase("poisson",     Poisson,     (mean=5.0,  var=5.0),   nothing, nothing),
+    FeasibilityCase("poisson",     Poisson,     (mean=5.0,  var=3.0),   nothing, nothing),
+
+    # NegativeBinomial: var > mean
+    FeasibilityCase("negative_binomial", NegativeBinomial, (mean=5.0, var=8.0), nothing, nothing),
+    FeasibilityCase("negative_binomial", NegativeBinomial, (mean=5.0, var=3.0), nothing, nothing),
+
+    # TDist: mu = 0, var > 1
+    FeasibilityCase("tdist",       TDist,       (mean=0.0,  var=2.0),   nothing, nothing),
+    FeasibilityCase("tdist",       TDist,       (mean=1.0,  var=2.0),   nothing, nothing),
+    FeasibilityCase("tdist",       TDist,       (mean=0.0,  var=0.5),   nothing, nothing),
+
+    # FDist: 1 < mu < 2, plus a lower-bound on var
+    FeasibilityCase("fdist",       FDist,       (mean=1.5,  var=10.0),  nothing, nothing),
+    FeasibilityCase("fdist",       FDist,       (mean=0.9,  var=5.0),   nothing, nothing),
+    FeasibilityCase("fdist",       FDist,       (mean=2.5,  var=5.0),   nothing, nothing),
+
+    # Cauchy: no finite mean/var ever
+    FeasibilityCase("cauchy",      Cauchy,      (mean=0.0,  var=1.0),   nothing, nothing),
+
+    # Truncated Normal on a bounded interval — Langevin dome
+    # On [-1, 1] at mu=0: dome boundary ~= 0.333
+    FeasibilityCase("normal", Normal, (mean=0.0, var=0.10), -1.0..1.0, (-1.0, 1.0)),
+    FeasibilityCase("normal", Normal, (mean=0.0, var=0.30), -1.0..1.0, (-1.0, 1.0)),
+    FeasibilityCase("normal", Normal, (mean=0.0, var=0.50), -1.0..1.0, (-1.0, 1.0)),
+
+    # Half-truncated Normal on [0, inf): bound is (mu - lo)^2
+    FeasibilityCase("normal", Normal, (mean=2.0, var=3.0), 0.0..Inf,   (0.0, Inf)),
+    FeasibilityCase("normal", Normal, (mean=2.0, var=5.0), 0.0..Inf,   (0.0, Inf)),
+
+    # Half-truncated Laplace: boundary is attained
+    FeasibilityCase("laplace", Laplace, (mean=2.0, var=4.0), 0.0..Inf, (0.0, Inf)),  # exactly (mu-lo)^2
+    FeasibilityCase("laplace", Laplace, (mean=2.0, var=5.0), 0.0..Inf, (0.0, Inf)),
+]
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -178,12 +238,32 @@ function build(output_path)
         ))
     end
 
-    mkpath(dirname(output_path))
-    open(output_path, "w") do io
-        JSON3.pretty(io, records)
+    feas_records = []
+    for case in FEAS_CASES
+        ok = if case.julia_support === nothing
+            dist_exists(case.julia_type; case.kwargs...)
+        else
+            dist_exists(case.julia_type; support=case.julia_support, case.kwargs...)
+        end
+        py_support = if case.py_support === nothing
+            nothing
+        else
+            [_safe(case.py_support[1]), _safe(case.py_support[2])]
+        end
+        push!(feas_records, Dict(
+            "py_name" => case.py_name,
+            "kwargs"  => _kwargs_to_json(case.kwargs),
+            "support" => py_support,
+            "expected" => ok,
+        ))
     end
 
-    @info "Wrote $(length(records)) cases to $output_path"
+    mkpath(dirname(output_path))
+    open(output_path, "w") do io
+        JSON3.pretty(io, Dict("constructors" => records, "feasibility" => feas_records))
+    end
+
+    @info "Wrote $(length(records)) constructor cases and $(length(feas_records)) feasibility cases to $output_path"
 end
 
 # Run

@@ -13,6 +13,8 @@ Per-distribution rules match the Julia conditions in `_why_not_dist_from_mean_va
 import math
 from scipy.special import gamma as _gamma_fn
 
+from ._langevin import truncexp_max_var
+
 
 # ---------------------------------------------------------------------------
 # Generic helpers
@@ -336,6 +338,135 @@ def why_not_mean_var(name, mu, var):
     return rule(mu, var)
 
 
+# ---------------------------------------------------------------------------
+# Truncated location-scale feasibility (Langevin envelope)
+# ---------------------------------------------------------------------------
+# For Normal / Laplace / Logistic truncated to [lo, hi], the feasibility region
+# is the truncated-exponential dome:
+#   - Bounded:    var < sigma2_max(mu) per the inverse-Langevin envelope.
+#   - Half-below: var < (mu - lo)^2 (the exponential bound).
+#   - Half-above: var < (hi - mu)^2.
+# Mirrors `_why_not_truncexp_envelope` and `_why_not_half_trunc_exp_envelope`
+# in DistributionsFactories.jl/src/dist_exists.jl.
+
+_TRUNC_LOCSCALE_FAMILIES = {"normal", "laplace", "logistic"}
+
+
+def _why_not_truncated_locscale(name, mu, var, lo, hi):
+    """Feasibility reason (or None) for ``name`` truncated to ``[lo, hi]``."""
+    label = name.capitalize()
+    if not (var > 0):
+        return f"Truncated {label}: var > 0 is not satisfied"
+
+    lo_finite = math.isfinite(lo)
+    hi_finite = math.isfinite(hi)
+
+    if lo_finite and hi_finite:
+        if not (lo < mu < hi):
+            return f"Truncated {label}: mu must be in ({lo}, {hi})"
+        sigma2_max = truncexp_max_var(lo, hi, mu)
+        # Tolerance: the envelope is approached (Normal/Logistic) or attained
+        # (Laplace) at the boundary. 1e-8 keeps the boundary itself feasible
+        # without admitting clearly-infeasible interiors. Matches Julia.
+        if var > sigma2_max * (1 + 1e-8):
+            return (f"Truncated {label}: var = {var} exceeds the Langevin "
+                    f"feasibility envelope sigma2_max ~= {sigma2_max:.6g} at "
+                    f"mu = {mu} on [{lo}, {hi}]. The Normal/Laplace/Logistic "
+                    f"families share this truncated-exponential upper bound.")
+        return None
+
+    if lo_finite and not hi_finite:
+        if not (mu > lo):
+            return f"Truncated {label}: mu must be > lo = {lo}"
+        gap = mu - lo
+        # Laplace attains the boundary; Normal/Logistic only approach it. Apply
+        # a small slack on the comparison so the Laplace boundary case is
+        # admitted.
+        if name == "laplace":
+            if var > gap ** 2 * (1 + 1e-10):
+                return (f"Truncated Laplace on [{lo}, inf): var must be "
+                        f"<= (mu - lo)^2 = {gap ** 2} (exponential bound, attained)")
+        else:
+            if var >= gap ** 2:
+                return (f"Truncated {label} on [{lo}, inf): var must be "
+                        f"< (mu - lo)^2 = {gap ** 2} (exponential-tail bound)")
+        return None
+
+    if not lo_finite and hi_finite:
+        if not (mu < hi):
+            return f"Truncated {label}: mu must be < hi = {hi}"
+        gap = hi - mu
+        if name == "laplace":
+            if var > gap ** 2 * (1 + 1e-10):
+                return (f"Truncated Laplace on (-inf, {hi}]: var must be "
+                        f"<= (hi - mu)^2 = {gap ** 2} (exponential bound, attained)")
+        else:
+            if var >= gap ** 2:
+                return (f"Truncated {label} on (-inf, {hi}]: var must be "
+                        f"< (hi - mu)^2 = {gap ** 2} (exponential-tail bound)")
+        return None
+
+    # Both endpoints infinite: untruncated, defer to the family's own predicate.
+    return _RULES[name](mu, var)
+
+
+def why_not_mean_var_on_support(name, mu, var, lo, hi):
+    """Feasibility reason for ``name`` placed on ``[lo, hi]`` (structural).
+
+    Mirrors Julia's `_dist_exists_on_support`. This is a **structural** check:
+    it verifies that the family can be placed on the requested support (via
+    affine transform or truncation) and standardizes moments back to the
+    natural support for the base feasibility predicate.
+
+    The Langevin envelope dome for Truncated{Normal/Laplace/Logistic} is
+    intentionally **not** applied here — Julia only applies the envelope when
+    you pass a ``Truncated{<:Normal}`` instance, not a ``Type + support=``.
+    The constructor path (``make_dist``) does apply it for clean errors via
+    ``why_not_truncated_locscale``.
+    """
+    from ._registry import SUPPORT_TYPE
+    natural = SUPPORT_TYPE.get(name)
+    if natural is None:
+        return f"{name}: distribution not supported"
+
+    if natural == "real":
+        # Real-line family on any support: structural check only.
+        return _RULES[name](mu, var)
+
+    if natural == "positive":
+        if math.isfinite(lo) and math.isinf(hi):
+            return _RULES[name](mu - lo, var)
+        if math.isinf(lo) and math.isfinite(hi):
+            return _RULES[name](hi - mu, var)
+        if math.isfinite(lo) and math.isfinite(hi):
+            if lo < 0:
+                return (f"Cannot place {name!r} (natural [0, inf)) on "
+                        f"[{lo}, {hi}] with lo < 0")
+            return _RULES[name](mu, var)
+        return f"Cannot place {name!r} (natural [0, inf)) on (-inf, inf)"
+
+    if natural == "unit":
+        if math.isfinite(lo) and math.isfinite(hi):
+            w = hi - lo
+            return _RULES[name]((mu - lo) / w, var / w ** 2)
+        return f"Cannot place {name!r} (natural [0, 1]) on unbounded interval"
+
+    # Discrete: deferred to constructor for now.
+    return None
+
+
+def why_not_truncated_locscale(name, mu, var, lo, hi):
+    """Langevin envelope feasibility for an *explicitly* truncated locscale dist.
+
+    Use this when the caller is building a truncated Normal/Laplace/Logistic
+    (rather than placing the type on an interval). Mirrors Julia's
+    ``_why_not_dist_from_mean_var(d::Truncated{<:Normal}, ...)``.
+    """
+    if name not in _TRUNC_LOCSCALE_FAMILIES:
+        return f"{name}: Langevin envelope only applies to Normal/Laplace/Logistic"
+    return _why_not_truncated_locscale(name, mu, var, lo, hi)
+
+
 def exists_mean_var(name, mu, var):
     """Boolean predicate. ``True`` iff `(mu, var)` is feasible for `name`."""
     return why_not_mean_var(name, mu, var) is None
@@ -344,5 +475,17 @@ def exists_mean_var(name, mu, var):
 def require_mean_var(name, mu, var):
     """Raise ``ValueError`` with the feasibility reason when infeasible."""
     reason = why_not_mean_var(name, mu, var)
+    if reason is not None:
+        raise ValueError(reason)
+
+
+def exists_mean_var_on_support(name, mu, var, lo, hi):
+    """Boolean predicate. ``True`` iff ``name`` is feasible on ``[lo, hi]``."""
+    return why_not_mean_var_on_support(name, mu, var, lo, hi) is None
+
+
+def require_mean_var_on_support(name, mu, var, lo, hi):
+    """Raise ``ValueError`` with the feasibility reason when infeasible on a support."""
+    reason = why_not_mean_var_on_support(name, mu, var, lo, hi)
     if reason is not None:
         raise ValueError(reason)

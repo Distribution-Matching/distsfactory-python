@@ -28,6 +28,12 @@ d.var()            # 3.0
 # scipy.stats objects work too
 import scipy.stats as st
 d = make_dist(st.gamma, mean=5, var=3)
+
+# Truncated Normal on [-1, 4] with mean 1 and standard deviation 0.8
+d = make_dist("normal", mean=1.0, std=0.8, support=(-1, 4))
+d.mean()           # 1.0
+d.std()            # 0.8
+d.pdf(1)           # density at 1
 ```
 
 ## Supported distributions

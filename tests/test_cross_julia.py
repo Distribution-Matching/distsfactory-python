@@ -18,7 +18,7 @@ import math
 import pathlib
 
 import pytest
-from distsfactory import make_dist
+from distsfactory import make_dist, dist_exists
 
 
 ORACLE = pathlib.Path(__file__).parent / "data" / "cross_oracle.json"
@@ -28,9 +28,13 @@ def _load_oracle():
     if not ORACLE.exists():
         pytest.skip(
             f"Oracle missing: {ORACLE}. "
-            "Regenerate by running scripts/build_cross_oracle.jl in the Julia repo."
+            "Regenerate by running scripts/build_cross_oracle.jl."
         )
-    return json.loads(ORACLE.read_text())
+    data = json.loads(ORACLE.read_text())
+    # Backward compat: older oracles were a flat list of constructor cases.
+    if isinstance(data, list):
+        return {"constructors": data, "feasibility": []}
+    return data
 
 
 def _coerce_kwargs(kw):
@@ -65,7 +69,22 @@ def _make_id(case):
     return f"{case['py_name']}({kw_str})"
 
 
-CASES = _load_oracle()
+ORACLE_DATA = _load_oracle()
+CASES = ORACLE_DATA["constructors"]
+FEAS_CASES = ORACLE_DATA["feasibility"]
+
+
+def _parse_support(s):
+    if s is None:
+        return None
+    lo, hi = _parse_value(s[0]), _parse_value(s[1])
+    return (lo, hi)
+
+
+def _feas_id(case):
+    kw_str = ",".join(f"{k}={v}" for k, v in case["kwargs"].items())
+    sup = f",support={case['support']}" if case["support"] is not None else ""
+    return f"{case['py_name']}({kw_str}{sup})->{case['expected']}"
 
 
 @pytest.mark.parametrize("case", CASES, ids=_make_id)
@@ -103,3 +122,20 @@ def test_cross_julia(case):
             q_py = float(d.ppf(p))
             assert math.isclose(q_py, q_jl, rel_tol=1e-5, abs_tol=1e-7), \
                 f"{name} {kwargs}: ppf({p}) Python={q_py} vs Julia={q_jl}"
+
+
+@pytest.mark.parametrize("case", FEAS_CASES, ids=_feas_id)
+def test_cross_julia_feasibility(case):
+    """Verify dist_exists() returns the same bool as the Julia reference."""
+    name = case["py_name"]
+    kwargs = _coerce_kwargs(case["kwargs"])
+    expected = case["expected"]
+    support = _parse_support(case["support"])
+
+    if support is None:
+        actual = dist_exists(name, **kwargs)
+    else:
+        actual = dist_exists(name, support=support, **kwargs)
+
+    assert actual is expected, \
+        f"{name} {kwargs} support={support}: Python={actual} vs Julia={expected}"

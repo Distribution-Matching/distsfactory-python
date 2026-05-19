@@ -4,9 +4,12 @@ import math
 
 from ._registry import resolve_dist, DISTRIBUTIONS, SUPPORT_TYPE
 from ._distributions import DIST_HANDLERS
-from ._feasibility import exists_mean_var as _exists_mean_var
+from ._feasibility import (
+    exists_mean_var as _exists_mean_var,
+    exists_mean_var_on_support as _exists_mean_var_on_support,
+)
 from ._specs import parse_spec, MeanVarSpec, MeanSpec, VarSpec
-from ._support import dist_on_support as _dist_on_support
+from ._support import dist_on_support as _dist_on_support, _support_endpoints
 from ._partial import PartialDist, solve_partial
 
 
@@ -139,11 +142,25 @@ def make_dist(dist, support=None, **kwargs):
     return handler.DISPATCH[spec_type](spec)
 
 
-def dist_exists(dist, **kwargs):
+def dist_exists(dist, support=None, **kwargs):
     """Check whether a distribution can be constructed with the given constraints.
 
-    For mean+variance specs this is a pure predicate (never throws). For other
-    specs it falls back to trying to construct.
+    For mean+variance specs this is a pure predicate (never throws); for the
+    truncated location-scale families the predicate uses the Langevin envelope
+    via ``_feasibility.exists_mean_var_on_support``. For other specs it falls
+    back to trying to construct.
+
+    Parameters
+    ----------
+    dist : str or scipy.stats distribution
+        Distribution family.
+    support : tuple, range, or None
+        Optional support specification. Use ``(lo, hi)`` (with ``math.inf`` /
+        ``-math.inf`` for unbounded endpoints) or ``range(lo, hi+1)`` for
+        discrete intervals. When given, feasibility is checked against the
+        support-aware predicate.
+    **kwargs
+        Specification keywords (same as ``make_dist``).
 
     Examples
     --------
@@ -152,13 +169,24 @@ def dist_exists(dist, **kwargs):
     True
     >>> dist_exists("beta", mean=0.5, var=0.3)
     False
-    >>> dist_exists("exponential", mean=2.5, var=6.25)
-    True
-    >>> dist_exists("exponential", mean=2.5, var=1.5)
+    >>> dist_exists("normal", mean=0, var=1.0, support=(-1, 1))
     False
+    >>> dist_exists("normal", mean=0, var=0.1, support=(-1, 1))
+    True
     """
     name, _ = resolve_dist(dist)
     spec = parse_spec(**kwargs)
+
+    if support is not None:
+        if not isinstance(spec, MeanVarSpec):
+            # Fall back to construction trial for non-MeanVar specs with support.
+            try:
+                make_dist(dist, support=support, **kwargs)
+                return True
+            except (ValueError, RuntimeError, AssertionError, NotImplementedError):
+                return False
+        lo, hi, _ = _support_endpoints(support)
+        return _exists_mean_var_on_support(name, spec.mean, spec.var, lo, hi)
 
     if isinstance(spec, MeanVarSpec):
         return _exists_mean_var(name, spec.mean, spec.var)
