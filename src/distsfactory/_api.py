@@ -5,8 +5,9 @@ import math
 from ._registry import resolve_dist, DISTRIBUTIONS, SUPPORT_TYPE
 from ._distributions import DIST_HANDLERS
 from ._feasibility import exists_mean_var as _exists_mean_var
-from ._specs import parse_spec, MeanVarSpec
+from ._specs import parse_spec, MeanVarSpec, MeanSpec, VarSpec
 from ._support import dist_on_support as _dist_on_support
+from ._partial import PartialDist, solve_partial
 
 
 _SUPPORT_STRINGS = {
@@ -89,8 +90,23 @@ def make_dist(dist, support=None, **kwargs):
     >>> round(make_dist("beta", mean=3.5, var=0.5, support=(2, 7)).mean(), 6)
     3.5
     """
-    name, _ = resolve_dist(dist)
     spec = parse_spec(**kwargs)
+
+    # PartialDist branch: solve free parameters from moment constraints.
+    if isinstance(dist, PartialDist):
+        if support is not None:
+            raise ValueError("`support=` is not supported with a PartialDist.")
+        if isinstance(spec, MeanVarSpec):
+            return solve_partial(dist, target_mean=spec.mean, target_var=spec.var)
+        if isinstance(spec, MeanSpec):
+            return solve_partial(dist, target_mean=spec.mean)
+        if isinstance(spec, VarSpec):
+            return solve_partial(dist, target_var=spec.var)
+        raise ValueError(
+            "PartialDist currently supports only mean, var, or mean+var specifications."
+        )
+
+    name, _ = resolve_dist(dist)
 
     if support is not None:
         if not isinstance(spec, MeanVarSpec):

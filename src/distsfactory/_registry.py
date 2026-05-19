@@ -132,6 +132,47 @@ SUPPORT_TYPE = {
 }
 
 
+# Canonical "tunable" scipy params per distribution. Matches the parameter set
+# the Julia Distributions.jl version exposes for that family. ``loc`` is omitted
+# for families whose natural support has a finite start (positive, unit) because
+# scipy adds it as a free shift parameter that doesn't exist in the canonical
+# parameterization.
+CANONICAL_PARAMS = {
+    # Real-line
+    "normal":            ("loc", "scale"),
+    "tdist":             ("df", "loc", "scale"),
+    "logistic":          ("loc", "scale"),
+    "laplace":           ("loc", "scale"),
+    "gumbel":            ("loc", "scale"),
+    "cauchy":            ("loc", "scale"),
+    "sym_triangular":    ("loc", "scale"),
+    "uniform":           ("loc", "scale"),
+    # Positive (no loc by default — scipy adds it but it's not in Julia's
+    # canonical form)
+    "gamma":             ("a", "scale"),
+    "erlang":            ("a", "scale"),
+    "exponential":       ("scale",),
+    "lognormal":         ("s", "scale"),
+    "weibull":           ("c", "scale"),
+    "frechet":           ("c", "scale"),
+    "chi":               ("df",),
+    "chisq":             ("df",),
+    "rayleigh":          ("scale",),
+    "fdist":             ("dfn", "dfd"),
+    "inverse_gamma":     ("a", "scale"),
+    "pareto":            ("b", "scale"),
+    "folded_normal":     ("c", "scale"),
+    # Unit-interval
+    "beta":              ("a", "b"),
+    # Discrete (loc handled separately for shifted ranges)
+    "binomial":          ("n", "p"),
+    "poisson":           ("mu",),
+    "negative_binomial": ("n", "p"),
+    "geometric":         ("p",),         # we parameterize as nbinom(1, p)
+    "discrete_uniform":  ("low", "high"),
+}
+
+
 def resolve_dist(dist):
     """Resolve a distribution argument to ``(canonical_name, scipy_dist)``.
 
