@@ -17,6 +17,7 @@ from distsfactory import make_dist
 
 # Construct from moments — returns a frozen scipy.stats distribution
 d = make_dist("gamma", mean=5, var=3)
+type(d)            # scipy.stats._distn_infrastructure.rv_continuous_frozen
 
 d.pdf(2)           # density
 d.cdf(0.95)        # CDF
@@ -31,6 +32,8 @@ d = make_dist(st.gamma, mean=5, var=3)
 
 # Truncated Normal on [-1, 4] with mean 1 and standard deviation 0.8
 d = make_dist("normal", mean=1.0, std=0.8, support=(-1, 4))
+type(d)                    # distsfactory._support._TruncatedDist
+                           # (scipy-frozen-compatible wrapper around the parent)
 d.mean(), d.std()          # (1.0, 0.8)  — moments after truncation
 d._inner.kwds              # {'loc': 0.9822, 'scale': 0.8232}
                            # — parent Normal(μ, σ) solved so the truncated
