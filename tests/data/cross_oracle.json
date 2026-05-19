@@ -1,0 +1,1082 @@
+[
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -1.2815515655446004,
+                "0.5": 0,
+                "0.9": 1.2815515655446004
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 1
+        },
+        "kwargs": {
+            "mean": 0,
+            "var": 1
+        },
+        "py_name": "normal",
+        "julia_type": "Normal"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 2.780287575957316,
+                "0.5": 5,
+                "0.9": 7.219712424042684
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 2.9999999999999996
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 3
+        },
+        "py_name": "normal",
+        "julia_type": "Normal"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -4.563103131089201,
+                "0.5": -2,
+                "0.9": 0.5631031310892007
+            },
+            "mean": -2,
+            "discrete": false,
+            "var": 4
+        },
+        "kwargs": {
+            "mean": -2,
+            "var": 4
+        },
+        "py_name": "normal",
+        "julia_type": "Normal"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -1.6094379124341003,
+                "0.5": 0,
+                "0.9": 1.6094379124341005
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 2
+        },
+        "kwargs": {
+            "mean": 0,
+            "var": 2
+        },
+        "py_name": "laplace",
+        "julia_type": "Laplace"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.7811241751317994,
+                "0.5": 5,
+                "0.9": 8.218875824868201
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 8
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 8
+        },
+        "py_name": "laplace",
+        "julia_type": "Laplace"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -2.197224577336219,
+                "0.5": 0,
+                "0.9": 2.1972245773362196
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 3.289868133696453
+        },
+        "kwargs": {
+            "mean": 0,
+            "var": 3.289868133696453
+        },
+        "py_name": "logistic",
+        "julia_type": "Logistic"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -0.8307622840174305,
+                "0.5": 3,
+                "0.9": 6.830762284017432
+            },
+            "mean": 3,
+            "discrete": false,
+            "var": 10
+        },
+        "kwargs": {
+            "mean": 3,
+            "var": 10
+        },
+        "py_name": "logistic",
+        "julia_type": "Logistic"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 3.094145450429802,
+                "0.5": 4.715451322144615,
+                "0.9": 7.259548611610896
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 3
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 3
+        },
+        "py_name": "gumbel",
+        "julia_type": "Gumbel"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -1.4112481101494887,
+                "0.5": -0.21070274431986852,
+                "0.9": 1.6731516624109126
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 1.6449340668482264
+        },
+        "kwargs": {
+            "mean": 0,
+            "var": 1.6449340668482264
+        },
+        "py_name": "gumbel",
+        "julia_type": "Gumbel"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 2.6,
+                "0.5": 5,
+                "0.9": 7.4
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 3
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 3
+        },
+        "py_name": "uniform",
+        "julia_type": "Uniform"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -0.4,
+                "0.5": 0,
+                "0.9": 0.4
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 0.08333333333333333
+        },
+        "kwargs": {
+            "mean": 0,
+            "var": 0.08333333333333333
+        },
+        "py_name": "uniform",
+        "julia_type": "Uniform"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -1.3167184270002528,
+                "0.5": 2,
+                "0.9": 5.316718427000253
+            },
+            "mean": 2,
+            "discrete": false,
+            "var": 6
+        },
+        "kwargs": {
+            "mean": 2,
+            "var": 6
+        },
+        "py_name": "sym_triangular",
+        "julia_type": "SymTriangularDist"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -1.5332062740589432,
+                "0.5": 0,
+                "0.9": 1.5332062740589432
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 2
+        },
+        "kwargs": {
+            "mean": 0,
+            "var": 2
+        },
+        "py_name": "tdist",
+        "julia_type": "TDist"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -1.7302509288071761,
+                "0.5": 0,
+                "0.9": 1.7302509288071761
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 5
+        },
+        "kwargs": {
+            "mean": 0,
+            "var": 5
+        },
+        "py_name": "tdist",
+        "julia_type": "TDist"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 2.9480249564961416,
+                "0.5": 4.801485046179958,
+                "0.9": 7.3082265913089985
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 3
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 3
+        },
+        "py_name": "gamma",
+        "julia_type": "Gamma"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 2.65905804194806,
+                "0.5": 8.391734950083306,
+                "0.9": 19.448600849337147
+            },
+            "mean": 10,
+            "discrete": false,
+            "var": 50
+        },
+        "kwargs": {
+            "mean": 10,
+            "var": 50
+        },
+        "py_name": "gamma",
+        "julia_type": "Gamma"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.1610307986962323,
+                "0.5": 0.43514601910955264,
+                "0.9": 0.923635689978112
+            },
+            "mean": 0.5,
+            "discrete": false,
+            "var": 0.10000000000000002
+        },
+        "kwargs": {
+            "mean": 0.5,
+            "var": 0.1
+        },
+        "py_name": "gamma",
+        "julia_type": "Gamma"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.3160815469734789,
+                "0.5": 2.0794415416798357,
+                "0.9": 6.907755278982138
+            },
+            "mean": 3,
+            "discrete": false,
+            "var": 9
+        },
+        "kwargs": {
+            "mean": 3,
+            "var": 9
+        },
+        "py_name": "exponential",
+        "julia_type": "Exponential"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.7447695628249114,
+                "0.5": 3.6720607488508956,
+                "0.9": 6.680783068255864
+            },
+            "mean": 4,
+            "discrete": false,
+            "var": 4
+        },
+        "kwargs": {
+            "mean": 4,
+            "var": 4
+        },
+        "py_name": "erlang",
+        "julia_type": "Erlang"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 3.068988017820032,
+                "0.5": 4.724555912615339,
+                "0.9": 7.273221153624429
+            },
+            "mean": 4.999999999999999,
+            "discrete": false,
+            "var": 3.000000000000002
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 3
+        },
+        "py_name": "lognormal",
+        "julia_type": "LogNormal"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.25470859019548564,
+                "0.5": 1.0690449676496976,
+                "0.9": 4.486920295778067
+            },
+            "mean": 2,
+            "discrete": false,
+            "var": 10.000000000000002
+        },
+        "kwargs": {
+            "mean": 2,
+            "var": 10
+        },
+        "py_name": "lognormal",
+        "julia_type": "LogNormal"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 2.743244401590032,
+                "0.5": 4.974703290118819,
+                "0.9": 7.269526641485105
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 3
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 3
+        },
+        "py_name": "weibull",
+        "julia_type": "Weibull"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.04744320592315823,
+                "0.5": 0.842984615472265,
+                "0.9": 5.274673158874498
+            },
+            "mean": 2,
+            "discrete": false,
+            "var": 10.000000000000002
+        },
+        "kwargs": {
+            "mean": 2,
+            "var": 10
+        },
+        "py_name": "weibull",
+        "julia_type": "Weibull"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 3.533279767075093,
+                "0.5": 4.577085790208411,
+                "0.9": 6.870376864240678
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 3
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 3
+        },
+        "py_name": "frechet",
+        "julia_type": "Frechet"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.8313190259293488,
+                "0.5": 4.6971863934982565,
+                "0.9": 8.561165801918731
+            },
+            "mean": 5.000000000000001,
+            "discrete": false,
+            "var": 6.8309886183790685
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 6.8309886183790685
+        },
+        "py_name": "rayleigh",
+        "julia_type": "Rayleigh"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 3.1947477563863647,
+                "0.5": 4.665743033586795,
+                "0.9": 7.194223188427797
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 3
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 3
+        },
+        "py_name": "inverse_gamma",
+        "julia_type": "InverseGamma"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 3.86612777875582,
+                "0.5": 4.469181057073005,
+                "0.9": 6.6465792142531726
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 2.9999999999999996
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 3
+        },
+        "py_name": "pareto",
+        "julia_type": "Pareto"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.0614745385853426,
+                "0.5": 2.4898785005580564,
+                "0.9": 3.923008165786656
+            },
+            "mean": 2.5000000000000004,
+            "discrete": false,
+            "var": 1.200000000000009
+        },
+        "kwargs": {
+            "mean": 2.5,
+            "var": 1.2
+        },
+        "py_name": "folded_normal",
+        "julia_type": "FoldedNormal"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.02906805993811442,
+                "0.5": 0.5804088145367516,
+                "0.9": 3.712726267011154
+            },
+            "mean": 1.5,
+            "discrete": false,
+            "var": 10
+        },
+        "kwargs": {
+            "mean": 1.5,
+            "var": 10
+        },
+        "py_name": "fdist",
+        "julia_type": "FDist"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.0313211026538844,
+                "0.5": 1.8321282651695876,
+                "0.9": 2.789164810428896
+            },
+            "mean": 1.8799712059732505,
+            "discrete": false,
+            "var": 0.4657082647114823
+        },
+        "kwargs": {
+            "mean": 1.8799712059732505,
+            "var": 0.4657082647114823
+        },
+        "py_name": "chi",
+        "julia_type": "Chi"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.0636232167792241,
+                "0.5": 3.3566939800333224,
+                "0.9": 7.779440339734858
+            },
+            "mean": 4,
+            "discrete": false,
+            "var": 8
+        },
+        "kwargs": {
+            "mean": 4,
+            "var": 8
+        },
+        "py_name": "chisq",
+        "julia_type": "Chisq"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.19580010565909173,
+                "0.5": 0.5,
+                "0.9": 0.8041998943409083
+            },
+            "mean": 0.5,
+            "discrete": false,
+            "var": 0.05
+        },
+        "kwargs": {
+            "mean": 0.5,
+            "var": 0.05
+        },
+        "py_name": "beta",
+        "julia_type": "Beta"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.12570496462967232,
+                "0.5": 0.2854911945679253,
+                "0.9": 0.4950375239068181
+            },
+            "mean": 0.3,
+            "discrete": false,
+            "var": 0.02
+        },
+        "kwargs": {
+            "mean": 0.3,
+            "var": 0.02
+        },
+        "py_name": "beta",
+        "julia_type": "Beta"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.495623975329112,
+                "0.5": 0.867114203402051,
+                "0.9": 0.9918682940813518
+            },
+            "mean": 0.8,
+            "discrete": false,
+            "var": 0.04
+        },
+        "kwargs": {
+            "mean": 0.8,
+            "var": 0.04
+        },
+        "py_name": "beta",
+        "julia_type": "Beta"
+    },
+    {
+        "expected": {
+            "mean": 5,
+            "discrete": true,
+            "var": 2.5
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 2.5
+        },
+        "py_name": "binomial",
+        "julia_type": "Binomial"
+    },
+    {
+        "expected": {
+            "mean": 5,
+            "discrete": true,
+            "var": 5
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 5
+        },
+        "py_name": "poisson",
+        "julia_type": "Poisson"
+    },
+    {
+        "expected": {
+            "mean": 5,
+            "discrete": true,
+            "var": 8
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 8
+        },
+        "py_name": "negative_binomial",
+        "julia_type": "NegativeBinomial"
+    },
+    {
+        "expected": {
+            "mean": 2.0000000000000004,
+            "discrete": true,
+            "var": 6.000000000000001
+        },
+        "kwargs": {
+            "mean": 2,
+            "var": 6
+        },
+        "py_name": "geometric",
+        "julia_type": "Geometric"
+    },
+    {
+        "expected": {
+            "mean": 5,
+            "discrete": true,
+            "var": 10
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 10
+        },
+        "py_name": "discrete_uniform",
+        "julia_type": "DiscreteUniform"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -1.9000311942057517,
+                "0.5": 0,
+                "0.9": 1.9000311942057517
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 2.198109338317732
+        },
+        "kwargs": {
+            "q1": -1,
+            "q3": 1
+        },
+        "py_name": "normal",
+        "julia_type": "Normal"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -1.9999999999999996,
+                "0.5": 0,
+                "0.9": 2
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 2.7257723735737245
+        },
+        "kwargs": {
+            "q1": -1,
+            "q3": 1
+        },
+        "py_name": "logistic",
+        "julia_type": "Logistic"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -2.321928094887362,
+                "0.5": 0,
+                "0.9": 2.3219280948873626
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 4.1627379620112155
+        },
+        "kwargs": {
+            "q1": -1,
+            "q3": 1
+        },
+        "py_name": "laplace",
+        "julia_type": "Laplace"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1,
+                "0.5": 3.1622776601683795,
+                "0.9": 10.000000000000002
+            },
+            "mean": 4.7342172745355935,
+            "discrete": false,
+            "var": 27.820606362554898
+        },
+        "kwargs": {
+            "quantiles": [
+                [
+                    0.1,
+                    1.0
+                ],
+                [
+                    0.9,
+                    10.0
+                ]
+            ]
+        },
+        "py_name": "lognormal",
+        "julia_type": "LogNormal"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.0000000000000002,
+                "0.5": 2.6724457804469677,
+                "0.9": 4.999999999999999
+            },
+            "mean": 2.8704655009915294,
+            "discrete": false,
+            "var": 2.43133324140617
+        },
+        "kwargs": {
+            "quantiles": [
+                [
+                    0.1,
+                    1.0
+                ],
+                [
+                    0.9,
+                    5.0
+                ]
+            ]
+        },
+        "py_name": "weibull",
+        "julia_type": "Weibull"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1,
+                "0.5": 1.851455335701599,
+                "0.9": 10.000000000000005
+            },
+            "mean": "inf",
+            "discrete": false,
+            "var": "inf"
+        },
+        "kwargs": {
+            "quantiles": [
+                [
+                    0.1,
+                    1.0
+                ],
+                [
+                    0.9,
+                    10.0
+                ]
+            ]
+        },
+        "py_name": "pareto",
+        "julia_type": "Pareto"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.8493063230948557,
+                "0.5": 4.307050853945253,
+                "0.9": 12.70204162665755
+            },
+            "mean": 5.792311366446935,
+            "discrete": false,
+            "var": 27.534342862325232
+        },
+        "kwargs": {
+            "q1": 2,
+            "q3": 8
+        },
+        "py_name": "gamma",
+        "julia_type": "Gamma"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.15909407184961785,
+                "0.5": 0.4999999999999999,
+                "0.9": 0.840905928150382
+            },
+            "mean": 0.49999999999999983,
+            "discrete": false,
+            "var": 0.06162433819448065
+        },
+        "kwargs": {
+            "q1": 0.3,
+            "q3": 0.7
+        },
+        "py_name": "beta",
+        "julia_type": "Beta"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.940401587395206,
+                "0.5": 4.5,
+                "0.9": 8.709905740033218
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 7.654576891224816
+        },
+        "kwargs": {
+            "median": 4.5,
+            "mean": 5
+        },
+        "py_name": "gamma",
+        "julia_type": "Gamma"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.10803431468615705,
+                "0.5": 0.38,
+                "0.9": 0.7246507910098117
+            },
+            "mean": 0.4,
+            "discrete": false,
+            "var": 0.051714199195714815
+        },
+        "kwargs": {
+            "median": 0.38,
+            "mean": 0.4
+        },
+        "py_name": "beta",
+        "julia_type": "Beta"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.1530573974115463,
+                "0.5": 2.5,
+                "0.9": 5.420371972835336
+            },
+            "mean": 3.0000000000000004,
+            "discrete": false,
+            "var": 3.9600000000000004
+        },
+        "kwargs": {
+            "median": 2.5,
+            "mean": 3
+        },
+        "py_name": "lognormal",
+        "julia_type": "LogNormal"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.610307986962323,
+                "0.5": 4.351460191095526,
+                "0.9": 9.23635689978112
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 10
+        },
+        "kwargs": {
+            "mode": 3,
+            "mean": 5
+        },
+        "py_name": "gamma",
+        "julia_type": "Gamma"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.6083281647427992,
+                "0.5": 4.377418532452933,
+                "0.9": 9.330429181066844
+            },
+            "mean": 5.0380661108380895,
+            "discrete": false,
+            "var": 10.267911804660967
+        },
+        "kwargs": {
+            "iqr": 4,
+            "mode": 3
+        },
+        "py_name": "gamma",
+        "julia_type": "Gamma"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.16168719986432123,
+                "0.5": 0.38822362195591964,
+                "0.9": 0.6560570529705854
+            },
+            "mean": 0.4,
+            "discrete": false,
+            "var": 0.034285714285714315
+        },
+        "kwargs": {
+            "mode": 0.35,
+            "mean": 0.4
+        },
+        "py_name": "beta",
+        "julia_type": "Beta"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.9180872100528416,
+                "0.5": 2.3548200450309493,
+                "0.9": 4.291932052578694
+            },
+            "mean": 2.5066282746310007,
+            "discrete": false,
+            "var": 1.7168146928204138
+        },
+        "kwargs": {
+            "mode": 2
+        },
+        "py_name": "rayleigh",
+        "julia_type": "Rayleigh"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.43689686891079926,
+                "0.5": 3,
+                "0.9": 5.563103131089201
+            },
+            "mean": 3,
+            "discrete": false,
+            "var": 4
+        },
+        "kwargs": {
+            "mode": 3,
+            "var": 4
+        },
+        "py_name": "normal",
+        "julia_type": "Normal"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.3160815469734789,
+                "0.5": 2.0794415416798357,
+                "0.9": 6.907755278982138
+            },
+            "mean": 3,
+            "discrete": false,
+            "var": 9
+        },
+        "kwargs": {
+            "mean": 3
+        },
+        "py_name": "exponential",
+        "julia_type": "Exponential"
+    },
+    {
+        "expected": {
+            "mean": 5,
+            "discrete": true,
+            "var": 5
+        },
+        "kwargs": {
+            "mean": 5
+        },
+        "py_name": "poisson",
+        "julia_type": "Poisson"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 1.831319025929349,
+                "0.5": 4.697186393498257,
+                "0.9": 8.561165801918731
+            },
+            "mean": 5.000000000000001,
+            "discrete": false,
+            "var": 6.83098861837907
+        },
+        "kwargs": {
+            "mean": 5
+        },
+        "py_name": "rayleigh",
+        "julia_type": "Rayleigh"
+    },
+    {
+        "expected": {
+            "mean": 3,
+            "discrete": true,
+            "var": 12
+        },
+        "kwargs": {
+            "mean": 3
+        },
+        "py_name": "geometric",
+        "julia_type": "Geometric"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.3040061868901,
+                "0.5": 2,
+                "0.9": 6.643856189774725
+            },
+            "mean": 2.8853900817779268,
+            "discrete": false,
+            "var": 8.325475924022431
+        },
+        "kwargs": {
+            "median": 2
+        },
+        "py_name": "exponential",
+        "julia_type": "Exponential"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 0.7797514820634841,
+                "0.5": 2,
+                "0.9": 3.64523145760999
+            },
+            "mean": 2.1289340388624525,
+            "discrete": false,
+            "var": 1.23842002172866
+        },
+        "kwargs": {
+            "median": 2
+        },
+        "py_name": "rayleigh",
+        "julia_type": "Rayleigh"
+    }
+]
