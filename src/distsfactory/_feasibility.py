@@ -265,6 +265,19 @@ def _why_not_geometric(mu, var):
     return None
 
 
+def _why_not_discrete_sym_triangular(mu, var):
+    r = _why_not_positive_var("DiscreteSymTriangular", var)
+    if r is not None:
+        return r
+    if not math.isclose(mu, round(mu), abs_tol=1e-8):
+        return f"DiscreteSymTriangular: mu must be an integer (got {mu})"
+    n_raw = -1 + math.sqrt(1 + 6 * var)
+    if not (math.isclose(n_raw, round(n_raw), abs_tol=1e-8) and round(n_raw) >= 0):
+        return (f"DiscreteSymTriangular: half-width n = -1 + sqrt(1+6*var) "
+                f"must be a non-negative integer (got n ~ {n_raw})")
+    return None
+
+
 def _why_not_discrete_uniform(mu, var):
     r = _why_not_positive_var("DiscreteUniform", var)
     if r is not None:
@@ -311,6 +324,7 @@ _RULES = {
     "negative_binomial": _why_not_negative_binomial,
     "geometric":         _why_not_geometric,
     "discrete_uniform":  _why_not_discrete_uniform,
+    "discrete_sym_triangular": _why_not_discrete_sym_triangular,
 }
 
 

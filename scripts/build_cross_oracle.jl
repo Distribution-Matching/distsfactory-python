@@ -112,6 +112,12 @@ const CASES = Case[
     # Single-quantile
     Case("exponential",    Exponential,        (median=2.0,)),
     Case("rayleigh",       Rayleigh,           (median=2.0,)),
+
+    # 3-parameter triangular (mean + var + mode)
+    Case("triangular",     TriangularDist,        (mean=5.0, var=2.0, mode=4.0)),
+    Case("triangular",     TriangularDist,        (mean=0.0, var=1.0, mode=0.0)),
+    Case("discrete_sym_triangular", DiscreteSymmetricTriangular, (mean=5.0, var=4.0)),
+    Case("discrete_triangular",     DiscreteTriangular,         (mean=5.0, var=2.0, mode=5.0)),
 ]
 
 # ---------------------------------------------------------------------------

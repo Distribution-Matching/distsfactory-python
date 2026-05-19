@@ -19,6 +19,7 @@ from scipy.special import gamma as _gammafn, gammaln
 
 from ._solvers import find_root_1d, newton_2d
 from ._feasibility import require_mean_var
+from ._extensions import DiscreteSymmetricTriangularDist, DiscreteTriangularDist
 from ._specs import (
     MeanVarSpec, MeanSpec, VarSpec, QuantileSpec, TwoQuantileSpec,
     MeanQuantileSpec, MeanModeSpec, ModeVarSpec, ModeQuantileSpec, ModeIQRSpec,
@@ -242,6 +243,39 @@ class SymTriangularDist:
 
     DISPATCH = {
         MeanVarSpec: lambda s: SymTriangularDist.from_mean_var(s.mean, s.var),
+    }
+
+
+# ---- (Asymmetric) Triangular ------------------------------------------------
+# TriangularDist(a, b, c) on Julia: support [a, b], mode at c.
+# mean = (a+b+c)/3, var = (a^2 + b^2 + c^2 - ab - ac - bc) / 18.
+# scipy.triang(c, loc, scale): support [loc, loc+scale], mode at loc+c*scale.
+class TriangularDist:
+    @staticmethod
+    def from_mean_var_mode(mu, var, c):
+        if not (var > 0):
+            raise ValueError("Triangular: var must be > 0")
+        S = 3 * mu - c
+        ab = (S ** 2 + c ** 2 - c * S - 18 * var) / 3
+        disc = S ** 2 - 4 * ab
+        if disc < 0:
+            raise ValueError(
+                f"Triangular: no real (a, b) for (mu={mu}, var={var}, mode={c}); "
+                f"discriminant={disc}"
+            )
+        sqrt_disc = math.sqrt(disc)
+        a = (S - sqrt_disc) / 2
+        b = (S + sqrt_disc) / 2
+        if not (a <= c <= b):
+            raise ValueError(
+                f"Triangular: solved (a={a}, b={b}) does not satisfy a <= c <= b"
+            )
+        scale = b - a
+        c_scipy = (c - a) / scale
+        return stats.triang(c=c_scipy, loc=a, scale=scale)
+
+    DISPATCH = {
+        MeanVarModeSpec: lambda s: TriangularDist.from_mean_var_mode(s.mean, s.var, s.mode),
     }
 
 
@@ -869,6 +903,57 @@ class PoissonDist:
     }
 
 
+# ---- Truncated Poisson ----------------------------------------------------
+# Like Julia's `dist_from_mean(Truncated{<:Poisson}, μ̄)`: solve for λ such that
+# the truncated mean equals the target. Returned as a _TruncatedPoisson wrapper
+# (scipy has no native truncated-Poisson form).
+def _truncated_poisson_moments(lam, lo, hi):
+    """Direct summation: mean & var of Poisson(λ) truncated to [lo, hi]."""
+    lo_i = int(math.ceil(lo))
+    hi_i = int(math.floor(hi))
+    Z = stats.poisson.cdf(hi_i, lam) - (
+        stats.poisson.cdf(lo_i - 1, lam) if lo_i > 0 else 0.0
+    )
+    if Z <= 0:
+        return float("nan"), float("nan")
+    m = 0.0
+    m2 = 0.0
+    for k in range(lo_i, hi_i + 1):
+        pk = stats.poisson.pmf(k, lam) / Z
+        m += k * pk
+        m2 += k * k * pk
+    return m, m2 - m * m
+
+
+def truncated_poisson(lo, hi, mean):
+    """Construct a Poisson on integers ``[lo, hi]`` with the given truncated mean.
+
+    The Poisson rate λ is solved by 1D root-finding such that the truncated
+    mean matches.
+    """
+    from scipy.optimize import brentq
+
+    if not (lo < mean < hi):
+        raise ValueError(f"Truncated Poisson: mean must be in ({lo}, {hi})")
+    if not (float(lo).is_integer() and float(hi).is_integer()):
+        raise ValueError("Truncated Poisson: lo and hi must be integers")
+
+    def residual(lam):
+        return _truncated_poisson_moments(lam, lo, hi)[0] - mean
+
+    lo_lam = max(mean / 4, 1e-3)
+    hi_lam = max(mean * 4, lo_lam + 1.0)
+    while residual(lo_lam) > 0 and lo_lam > 1e-8:
+        lo_lam /= 2
+    while residual(hi_lam) < 0:
+        hi_lam *= 2
+
+    lam = brentq(residual, lo_lam, hi_lam)
+    parent = stats.poisson(mu=lam)
+    from ._support import _TruncatedDist
+    return _TruncatedDist(parent, lo, hi)
+
+
 # ---- Negative Binomial ----------------------------------------------------
 # scipy.nbinom(n=r, p). Support {0,1,...}. Mean = r*(1-p)/p, Var = r*(1-p)/p^2.
 class NegativeBinomialDist:
@@ -928,6 +1013,63 @@ class GeometricDist:
     }
 
 
+# ---- Discrete Symmetric Triangular ---------------------------------------
+# Var = n(n+2)/6; closed-form recovery of n from var.
+class DiscreteSymTriangularDist:
+    @staticmethod
+    def from_mean_var(mu, var):
+        require_mean_var("discrete_sym_triangular", mu, var)
+        n = round(-1 + math.sqrt(1 + 6 * var))
+        return DiscreteSymmetricTriangularDist(mu=int(round(mu)), n=n)
+
+    DISPATCH = {
+        MeanVarSpec: lambda s: DiscreteSymTriangularDist.from_mean_var(s.mean, s.var),
+    }
+
+
+# ---- Discrete Triangular -------------------------------------------------
+# 3 integer params (a, b, c). mean+var alone is underdetermined; we use the
+# (mean, var, mode) factory like Julia's `dist_from_mean_var_mode`.
+class DiscreteTriDist:
+    @staticmethod
+    def from_mean_var_mode(mu, var, c):
+        # Solve the *continuous* triangular for (a, b), round, then search a
+        # +/- 1 neighborhood for the integer triple whose moments are closest.
+        cont_dist = TriangularDist.from_mean_var_mode(mu, var, c)
+        loc = cont_dist.kwds["loc"]
+        scale = cont_dist.kwds["scale"]
+        c_scipy = cont_dist.kwds["c"]
+        a_cont, b_cont = loc, loc + scale
+        c_int = int(round(c))
+        a0 = int(round(a_cont))
+        b0 = int(round(b_cont))
+
+        best = None
+        best_err = float("inf")
+        for da in (-1, 0, 1):
+            for db in (-1, 0, 1):
+                a_try = min(a0 + da, c_int)
+                b_try = max(b0 + db, c_int)
+                if not (a_try <= c_int <= b_try):
+                    continue
+                d = DiscreteTriangularDist(a=a_try, b=b_try, c=c_int)
+                err = ((d.mean() - mu) / max(abs(mu), 1.0)) ** 2 + \
+                      ((d.var() - var) / max(var, 1.0)) ** 2
+                if err < best_err:
+                    best_err = err
+                    best = d
+        if best is None:
+            raise ValueError(
+                f"DiscreteTriangular: no integer triple satisfies "
+                f"(mean={mu}, var={var}, mode={c})"
+            )
+        return best
+
+    DISPATCH = {
+        MeanVarModeSpec: lambda s: DiscreteTriDist.from_mean_var_mode(s.mean, s.var, s.mode),
+    }
+
+
 # ---- Discrete Uniform -----------------------------------------------------
 # scipy.randint(low, high) on {low, low+1, ..., high-1}. Julia's DiscreteUniform(a,b)
 # is on {a,...,b} inclusive — we pass high = b + 1.
@@ -959,6 +1101,7 @@ DIST_HANDLERS = {
     "tdist":             TDistDist,
     "uniform":           UniformDist,
     "sym_triangular":    SymTriangularDist,
+    "triangular":        TriangularDist,
     # Positive continuous
     "gamma":             GammaDist,
     "erlang":            ErlangDist,
@@ -981,4 +1124,6 @@ DIST_HANDLERS = {
     "negative_binomial": NegativeBinomialDist,
     "geometric":         GeometricDist,
     "discrete_uniform":  DiscreteUniformDist,
+    "discrete_sym_triangular": DiscreteSymTriangularDist,
+    "discrete_triangular":     DiscreteTriDist,
 }

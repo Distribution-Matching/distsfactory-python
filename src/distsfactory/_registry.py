@@ -36,6 +36,7 @@ DISTRIBUTIONS = {
     "gumbel":            stats.gumbel_r,
     "cauchy":            stats.cauchy,
     "sym_triangular":    stats.triang,
+    "triangular":        stats.triang,
     "uniform":           stats.uniform,
     # Positive continuous
     "gamma":             stats.gamma,
@@ -59,6 +60,9 @@ DISTRIBUTIONS = {
     "negative_binomial": stats.nbinom,
     "geometric":         stats.nbinom,  # parameterized as nbinom(1, p)
     "discrete_uniform":  stats.randint,
+    # Extensions (not in scipy.stats — see _extensions.py)
+    "discrete_sym_triangular": None,
+    "discrete_triangular":     None,
 }
 
 
@@ -105,6 +109,7 @@ SUPPORT_TYPE = {
     "gumbel":            "real",
     "cauchy":            "real",
     "sym_triangular":    "real",
+    "triangular":        "real",
     "uniform":           "real",
     # Positive
     "gamma":             "positive",
@@ -125,6 +130,8 @@ SUPPORT_TYPE = {
     # Discrete bounded
     "binomial":          "integer_bounded",
     "discrete_uniform":  "integer_bounded",
+    "discrete_sym_triangular": "integer_bounded",
+    "discrete_triangular":     "integer_bounded",
     # Discrete unbounded
     "poisson":           "integer_nonneg",
     "negative_binomial": "integer_nonneg",
@@ -177,7 +184,10 @@ def resolve_dist(dist):
     """Resolve a distribution argument to ``(canonical_name, scipy_dist)``.
 
     Accepts a canonical name (``"gamma"``), an alias (``"exp"``), or a
-    ``scipy.stats`` distribution object. Case-insensitive for strings.
+    ``scipy.stats`` distribution object. Case-insensitive for strings. For
+    extension types not backed by scipy (e.g. ``discrete_triangular``), the
+    returned scipy object is ``None`` — callers that need the scipy object
+    should special-case extension names.
     """
     if isinstance(dist, str):
         name = dist.lower().replace("-", "_")
@@ -193,6 +203,8 @@ def resolve_dist(dist):
     target = getattr(dist, "name", None)
     if target is not None:
         for canon, scipy_dist in DISTRIBUTIONS.items():
+            if scipy_dist is None:
+                continue
             if dist is scipy_dist or scipy_dist.name == target:
                 return canon, scipy_dist
 

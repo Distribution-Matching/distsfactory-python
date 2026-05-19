@@ -1078,5 +1078,70 @@
         },
         "py_name": "rayleigh",
         "julia_type": "Rayleigh"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": 3.261142137130869,
+                "0.5": 4.819110894465941,
+                "0.9": 7.049599101227048
+            },
+            "mean": 5,
+            "discrete": false,
+            "var": 2.0000000000000004
+        },
+        "kwargs": {
+            "mode": 4,
+            "mean": 5,
+            "var": 2
+        },
+        "py_name": "triangular",
+        "julia_type": "TriangularDist"
+    },
+    {
+        "expected": {
+            "ppf": {
+                "0.1": -1.3540446277728457,
+                "0.5": 0,
+                "0.9": 1.354044627772846
+            },
+            "mean": 0,
+            "discrete": false,
+            "var": 0.9999999999999998
+        },
+        "kwargs": {
+            "mode": 0,
+            "mean": 0,
+            "var": 1
+        },
+        "py_name": "triangular",
+        "julia_type": "TriangularDist"
+    },
+    {
+        "expected": {
+            "mean": 5,
+            "discrete": true,
+            "var": 4
+        },
+        "kwargs": {
+            "mean": 5,
+            "var": 4
+        },
+        "py_name": "discrete_sym_triangular",
+        "julia_type": "DiscreteSymmetricTriangular"
+    },
+    {
+        "expected": {
+            "mean": 5.333333333333332,
+            "discrete": true,
+            "var": 1.8888888888888888
+        },
+        "kwargs": {
+            "mode": 5,
+            "mean": 5,
+            "var": 2
+        },
+        "py_name": "discrete_triangular",
+        "julia_type": "DiscreteTriangular"
     }
 ]

@@ -167,7 +167,14 @@ class _TruncatedDist:
         self._inner = inner
         self.lo = float(lo)
         self.hi = float(hi)
-        self._Z = inner.cdf(hi) - inner.cdf(lo)
+        self._discrete = hasattr(inner, "pmf")
+        if self._discrete:
+            lo_i = int(math.ceil(self.lo))
+            hi_i = int(math.floor(self.hi))
+            cdf_at_lo_minus_1 = inner.cdf(lo_i - 1) if lo_i > 0 else 0.0
+            self._Z = inner.cdf(hi_i) - cdf_at_lo_minus_1
+        else:
+            self._Z = inner.cdf(hi) - inner.cdf(lo)
         if not (self._Z > 0):
             raise ValueError(
                 f"Truncated distribution: truncation mass is zero on [{lo}, {hi}]"
@@ -179,8 +186,16 @@ class _TruncatedDist:
     def pdf(self, x):
         x = _scalar_or_array(x)
         in_support = (x >= self.lo) & (x <= self.hi)
-        out = self._inner.pdf(x) / self._Z
+        if self._discrete:
+            out = self._inner.pmf(x) / self._Z
+        else:
+            out = self._inner.pdf(x) / self._Z
         return _where_zero(in_support, out)
+
+    def pmf(self, x):
+        if not self._discrete:
+            raise AttributeError("pmf not defined for continuous distribution")
+        return self.pdf(x)
 
     def cdf(self, x):
         x = _scalar_or_array(x)
@@ -204,12 +219,27 @@ class _TruncatedDist:
         return self._inner.ppf(F_lo + U * self._Z)
 
     def mean(self):
-        # Compute from inner via numerical quadrature when no closed form.
+        if self._discrete:
+            lo_i = int(math.ceil(self.lo))
+            hi_i = int(math.floor(self.hi))
+            m = 0.0
+            for k in range(lo_i, hi_i + 1):
+                m += k * self._inner.pmf(k) / self._Z
+            return m
         from scipy.integrate import quad
         m, _ = quad(lambda x: x * self._inner.pdf(x), self.lo, self.hi)
         return m / self._Z
 
     def var(self):
+        if self._discrete:
+            lo_i = int(math.ceil(self.lo))
+            hi_i = int(math.floor(self.hi))
+            m, m2 = 0.0, 0.0
+            for k in range(lo_i, hi_i + 1):
+                pk = self._inner.pmf(k) / self._Z
+                m += k * pk
+                m2 += k * k * pk
+            return m2 - m * m
         from scipy.integrate import quad
         m, _ = quad(lambda x: x * self._inner.pdf(x), self.lo, self.hi)
         m2, _ = quad(lambda x: x ** 2 * self._inner.pdf(x), self.lo, self.hi)
@@ -295,6 +325,20 @@ def _dispatch_discrete(name, mu, var, lo, hi):
     if natural == "integer_bounded":
         return _discrete_affine_shift(name, mu, var, lo)
     if natural == "integer_nonneg":
+        if name == "poisson":
+            from ._distributions import truncated_poisson
+            td = truncated_poisson(lo, hi, mu)
+            # Variance is determined by mean on a bounded support — if the
+            # caller passed a var that disagrees, surface it (Julia does the
+            # same; rtol=1e-3 there).
+            achieved_var = td.var()
+            if not math.isclose(achieved_var, var, rel_tol=1e-3, abs_tol=1e-9):
+                raise ValueError(
+                    f"Truncated Poisson on [{int(lo)}, {int(hi)}]: variance is "
+                    f"determined by the mean; achieved var={achieved_var:.6g}, "
+                    f"requested var={var:.6g}"
+                )
+            return td
         raise NotImplementedError(
             f"{name!r} on a bounded discrete range is not yet supported"
         )
@@ -302,24 +346,14 @@ def _dispatch_discrete(name, mu, var, lo, hi):
 
 
 def _truncate_real(name, mu, var, lo, hi):
-    """Truncate a real-line distribution to ``[lo, hi]``.
-
-    The parent's parameters are solved so that the truncated distribution has
-    mean ``mu`` and variance ``var``. Currently uses a 2D Newton on parent
-    ``(loc, scale)`` for Normal/Laplace/Logistic; for other families, falls
-    back to building at ``(mu, var)`` then truncating without re-solving (the
-    truncated moments will then *not* be exactly ``mu``/``var``).
-    """
-    from ._truncation_solvers import solve_truncated_locscale
+    """Truncate a real-line distribution to ``[lo, hi]`` and match moments."""
+    from ._truncation_solvers import solve_truncated_locscale, solve_truncated_generic
     if name in ("normal", "laplace", "logistic"):
         return solve_truncated_locscale(name, lo, hi, mu, var)
-    # Naive fallback: build a parent matching (mu, var), then truncate.
-    parent = DIST_HANDLERS[name].from_mean_var(mu, var)
-    return _TruncatedDist(parent, lo, hi)
+    return solve_truncated_generic(name, lo, hi, mu, var)
 
 
 def _truncate_positive(name, mu, var, lo, hi):
-    """Truncate a positive-support distribution to ``[lo, hi]``."""
-    # Naive: build parent at (mu, var) on natural support, truncate.
-    parent = DIST_HANDLERS[name].from_mean_var(mu, var)
-    return _TruncatedDist(parent, lo, hi)
+    """Truncate a positive-support distribution to ``[lo, hi]`` and match moments."""
+    from ._truncation_solvers import solve_truncated_generic
+    return solve_truncated_generic(name, lo, hi, mu, var)

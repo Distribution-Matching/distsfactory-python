@@ -95,7 +95,17 @@ def make_dist(dist, support=None, **kwargs):
     # PartialDist branch: solve free parameters from moment constraints.
     if isinstance(dist, PartialDist):
         if support is not None:
-            raise ValueError("`support=` is not supported with a PartialDist.")
+            # Special case: PartialDist("tdist", df=ν) + support=(lo, hi)
+            # routes to the truncated location-scale Student-t solver.
+            if dist.name == "tdist" and "df" in dist.fixed and \
+                    isinstance(spec, MeanVarSpec) and isinstance(support, tuple):
+                from ._truncation_solvers import solve_truncated_tdist_half
+                lo, hi = float(support[0]), float(support[1])
+                return solve_truncated_tdist_half(
+                    df=dist.fixed["df"], lo=lo, hi=hi,
+                    mu=spec.mean, var=spec.var,
+                )
+            raise ValueError("`support=` is not supported with this PartialDist.")
         if isinstance(spec, MeanVarSpec):
             return solve_partial(dist, target_mean=spec.mean, target_var=spec.var)
         if isinstance(spec, MeanSpec):
