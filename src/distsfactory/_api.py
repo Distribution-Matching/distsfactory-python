@@ -4,9 +4,10 @@ from ._registry import resolve_dist, DISTRIBUTIONS, SUPPORT_TYPE
 from ._distributions import DIST_HANDLERS
 from ._feasibility import exists_mean_var as _exists_mean_var
 from ._specs import parse_spec, MeanVarSpec
+from ._support import dist_on_support as _dist_on_support
 
 
-def make_dist(dist, **kwargs):
+def make_dist(dist, support=None, **kwargs):
     """Construct a distribution from partial specifications.
 
     Returns a frozen ``scipy.stats`` distribution whose moments, quantiles,
@@ -19,6 +20,12 @@ def make_dist(dist, **kwargs):
         ``"normal"``, ``"weibull"``, ``"binomial"``, …) are accepted along with
         common aliases (case-insensitive). A ``scipy.stats`` distribution
         object is also accepted.
+    support : tuple or range, optional
+        Target support. Use ``(lo, hi)`` for a continuous interval (either
+        endpoint may be ``math.inf`` / ``-math.inf``). Use ``range(a, b+1)``
+        for a discrete interval ``{a, …, b}``. When given, the distribution
+        is placed on this support via an affine transform or truncation
+        (currently restricted to ``mean+var`` specs).
     **kwargs
         Specification keywords. At least one is required.
 
@@ -44,12 +51,21 @@ def make_dist(dist, **kwargs):
     5.0
     >>> round(make_dist("normal", mean=0, var=4).var(), 6)
     4.0
-    >>> round(make_dist("weibull", mean=2, var=1).mean(), 4)
-    2.0
+    >>> round(make_dist("beta", mean=3.5, var=0.5, support=(2, 7)).mean(), 6)
+    3.5
     """
     name, _ = resolve_dist(dist)
-    handler = DIST_HANDLERS[name]
     spec = parse_spec(**kwargs)
+
+    if support is not None:
+        if not isinstance(spec, MeanVarSpec):
+            raise ValueError(
+                "`support=` is currently only supported together with mean+var "
+                "(or equivalent dispersion: std, cv, scv, second_moment)."
+            )
+        return _dist_on_support(dist, spec.mean, spec.var, support)
+
+    handler = DIST_HANDLERS[name]
     spec_type = type(spec)
 
     if spec_type not in handler.DISPATCH:
