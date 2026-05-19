@@ -116,3 +116,13 @@ class TestDistExistsWithSupport:
         # Gamma's natural support is [0, inf); it cannot be placed on (-inf, inf).
         assert dist_exists("gamma", mean=0.0, var=1.0,
                            support=(-math.inf, math.inf)) is False
+
+    def test_discrete_range_consistent_with_make_dist(self):
+        # Truncated Poisson on [2, 10] — variance is determined by mean.
+        # dist_exists must agree with make_dist's reject/accept outcome.
+        # An inconsistent var rejects.
+        assert dist_exists("poisson", mean=5.0, var=10.0, support=range(2, 11)) is False
+        # The consistent var (achieved by the truncated Poisson with mean=5) accepts.
+        from distsfactory._distributions import truncated_poisson
+        td = truncated_poisson(2, 10, 5.0)
+        assert dist_exists("poisson", mean=5.0, var=td.var(), support=range(2, 11)) is True

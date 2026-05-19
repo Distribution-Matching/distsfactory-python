@@ -105,3 +105,25 @@ class TestErrors:
         spec = partial_dist("gamma", a=3.0)
         assert spec.fixed_params() == {"a": 3.0}
         assert spec.free_params() == ["scale"]
+
+
+class TestAllFixedValidation:
+    """When all parameters are pinned, solve_partial must verify the moments
+    rather than silently returning a mismatched distribution.
+    """
+
+    def test_mean_mismatch_raises(self):
+        spec = partial_dist("gamma", a=2.0, scale=3.0)  # mean=6, var=18
+        with pytest.raises(ValueError, match="target_mean"):
+            make_dist(spec, mean=10.0)
+
+    def test_var_mismatch_raises(self):
+        spec = partial_dist("gamma", a=2.0, scale=3.0)  # var=18
+        with pytest.raises(ValueError, match="target_var"):
+            make_dist(spec, var=50.0)
+
+    def test_both_match_succeeds(self):
+        spec = partial_dist("gamma", a=2.0, scale=3.0)
+        d = make_dist(spec, mean=6.0, var=18.0)
+        assert math.isclose(d.mean(), 6.0)
+        assert math.isclose(d.var(), 18.0)

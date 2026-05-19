@@ -69,15 +69,56 @@ class TestTruncation:
         assert _close(d.mean(), 0.1, rel=1e-6)
         assert _close(d.var(), 0.05, rel=1e-6)
 
+    def test_normal_returns_truncnorm(self):
+        # scipy has truncnorm natively, so we return that rather than _TruncatedDist.
+        d = make_dist("normal", mean=0.1, var=0.05, support=(-0.5, 0.5))
+        assert d.dist.name == "truncnorm"
+
+    def test_normal_half_below(self):
+        d = make_dist("normal", mean=2.0, var=3.0, support=(0.0, math.inf))
+        assert _close(d.mean(), 2.0, rel=1e-6)
+        assert _close(d.var(), 3.0, rel=1e-6)
+
+    def test_normal_half_above(self):
+        d = make_dist("normal", mean=-2.0, var=3.0, support=(-math.inf, 0.0))
+        assert _close(d.mean(), -2.0, rel=1e-6)
+        assert _close(d.var(), 3.0, rel=1e-6)
+
     def test_laplace_two_sided(self):
         d = make_dist("laplace", mean=0.0, var=0.1, support=(-1.0, 1.0))
         assert _close(d.mean(), 0.0, abs_tol=1e-8)
         assert _close(d.var(), 0.1, rel=1e-6)
 
+    def test_laplace_half_below(self):
+        d = make_dist("laplace", mean=2.0, var=3.0, support=(0.0, math.inf))
+        assert _close(d.mean(), 2.0, rel=1e-6)
+        assert _close(d.var(), 3.0, rel=1e-6)
+
     def test_logistic_two_sided(self):
         d = make_dist("logistic", mean=0.0, var=0.1, support=(-1.0, 1.0))
         assert _close(d.mean(), 0.0, abs_tol=1e-8)
         assert _close(d.var(), 0.1, rel=1e-6)
+
+
+class TestTruncatedScipyNative:
+    """Verify that truncated forms scipy supports natively are returned as
+    real scipy frozen distributions, not our _TruncatedDist wrapper.
+    """
+
+    def test_truncated_exponential_returns_truncexpon(self):
+        from distsfactory._truncation_solvers import _solve_truncated_exponential
+        d = _solve_truncated_exponential(0.0, 10.0, 2.0, 3.50262)
+        assert d.dist.name == "truncexpon"
+
+    def test_truncated_exponential_no_upper_bound(self):
+        # Half-truncated (lo > 0, hi = +inf) returns scipy.expon shifted
+        d = make_dist("exponential", mean=5.0, var=9.0, support=(2.0, math.inf))
+        assert _close(d.mean(), 5.0)
+        assert _close(d.var(), 9.0)
+
+    def test_truncated_exp_inconsistent_var_rejected(self):
+        with pytest.raises(ValueError, match="variance is determined"):
+            make_dist("exponential", mean=2.0, var=4.0, support=(0.0, 10.0))
 
 
 class TestSupportErrors:

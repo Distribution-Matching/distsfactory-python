@@ -185,7 +185,17 @@ def dist_exists(dist, support=None, **kwargs):
                 return True
             except (ValueError, RuntimeError, AssertionError, NotImplementedError):
                 return False
-        lo, hi, _ = _support_endpoints(support)
+        lo, hi, is_discrete = _support_endpoints(support)
+        # For discrete supports (truncated Poisson etc.) the predicate path is
+        # permissive — there's no closed-form feasibility for the truncated
+        # mean/var combination. Fall back to a construction trial so dist_exists
+        # and make_dist agree on the answer.
+        if is_discrete:
+            try:
+                make_dist(dist, support=support, **kwargs)
+                return True
+            except (ValueError, RuntimeError, AssertionError, NotImplementedError):
+                return False
         return _exists_mean_var_on_support(name, spec.mean, spec.var, lo, hi)
 
     if isinstance(spec, MeanVarSpec):

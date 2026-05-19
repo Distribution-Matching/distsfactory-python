@@ -215,7 +215,7 @@ def solve_partial(spec, target_mean=None, target_var=None):
     free_names = spec.free_params()
 
     if not free_names:
-        # All params fixed: build and check.
+        # All params fixed: build and check both moments (when provided).
         d = scipy_dist(**spec.fixed)
         if target_mean is not None and not math.isclose(
             float(d.mean()), target_mean, rel_tol=1e-6, abs_tol=1e-9
@@ -223,6 +223,13 @@ def solve_partial(spec, target_mean=None, target_var=None):
             raise ValueError(
                 f"PartialDist({name}, {spec.fixed}) has mean {d.mean()} "
                 f"but target_mean is {target_mean}"
+            )
+        if target_var is not None and not math.isclose(
+            float(d.var()), target_var, rel_tol=1e-6, abs_tol=1e-9
+        ):
+            raise ValueError(
+                f"PartialDist({name}, {spec.fixed}) has var {d.var()} "
+                f"but target_var is {target_var}"
             )
         return d
 

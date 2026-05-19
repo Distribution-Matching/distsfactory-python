@@ -32,13 +32,16 @@ d = make_dist(st.gamma, mean=5, var=3)
 
 # Truncated Normal on [-1, 4] with mean 1 and standard deviation 0.8
 d = make_dist("normal", mean=1.0, std=0.8, support=(-1, 4))
-type(d)                    # distsfactory._support._TruncatedDist
-                           # (scipy-frozen-compatible wrapper around the parent)
+type(d)                    # scipy.stats._distn_infrastructure.rv_continuous_frozen
+                           # (a scipy.stats.truncnorm)
 d.mean(), d.std()          # (1.0, 0.8)  — moments after truncation
-d._inner.kwds              # {'loc': 0.9822, 'scale': 0.8232}
+d.kwds                     # {'a': -2.408, 'b': 3.666,
+                           #  'loc': 0.9822, 'scale': 0.8232}
                            # — parent Normal(μ, σ) solved so the truncated
                            #   distribution hits the requested (mean, std)
 ```
+
+Whenever scipy provides a native truncated form (`truncnorm`, `truncexpon`, …) we return that. For families where scipy doesn't (`Truncated{Laplace}`, `Truncated{Gamma}`, …) the return is a `distsfactory._support._TruncatedDist` wrapper with the same `pdf`/`cdf`/`ppf`/`mean`/`var`/`rvs` surface.
 
 ## Supported distributions
 
