@@ -1,0 +1,189 @@
+#!/usr/bin/env julia
+# Build a JSON oracle of (dist, kwargs) -> (mean, var, ppf, params) used by
+# tests/test_cross_julia.py to verify Python and Julia agree numerically.
+#
+# Usage (from the distsfactory-python repo root):
+#   julia --project=../DistributionsFactories.jl scripts/build_cross_oracle.jl
+#
+# Optional first argument: output path. Default: tests/data/cross_oracle.json
+# relative to this script.
+#
+# The DistributionsFactories.jl project needs JSON3 in its Project.toml:
+#   julia --project=../DistributionsFactories.jl -e 'using Pkg; Pkg.add("JSON3")'
+#
+# To add cases, append to the CASES vector below. Each entry is a Case with
+# the canonical Python distribution name, the Julia type, and the make_dist
+# kwargs as a NamedTuple. Discrete distributions emit moments only; continuous
+# distributions also emit ppf at quantiles (0.1, 0.5, 0.9).
+
+using DistributionsFactories
+using Distributions
+using JSON3
+
+struct Case
+    py_name::String          # canonical Python distribution name
+    julia_type::Type         # Julia type to pass to make_dist
+    kwargs::NamedTuple       # kwargs to pass to make_dist (must round-trip to Python identically)
+end
+
+# ---------------------------------------------------------------------------
+# Battery of test cases
+# ---------------------------------------------------------------------------
+
+const CASES = Case[
+    # Real-line continuous: mean+var
+    Case("normal",         Normal,             (mean=0.0,  var=1.0)),
+    Case("normal",         Normal,             (mean=5.0,  var=3.0)),
+    Case("normal",         Normal,             (mean=-2.0, var=4.0)),
+    Case("laplace",        Laplace,            (mean=0.0,  var=2.0)),
+    Case("laplace",        Laplace,            (mean=5.0,  var=8.0)),
+    Case("logistic",       Logistic,           (mean=0.0,  var=π^2/3)),
+    Case("logistic",       Logistic,           (mean=3.0,  var=10.0)),
+    Case("gumbel",         Gumbel,             (mean=5.0,  var=3.0)),
+    Case("gumbel",         Gumbel,             (mean=0.0,  var=π^2/6)),
+    Case("uniform",        Uniform,            (mean=5.0,  var=3.0)),
+    Case("uniform",        Uniform,            (mean=0.0,  var=1/12)),
+    Case("sym_triangular", SymTriangularDist,  (mean=2.0,  var=6.0)),
+
+    # TDist
+    Case("tdist",          TDist,              (mean=0.0,  var=2.0)),
+    Case("tdist",          TDist,              (mean=0.0,  var=5.0)),
+
+    # Positive continuous: mean+var
+    Case("gamma",          Gamma,              (mean=5.0,  var=3.0)),
+    Case("gamma",          Gamma,              (mean=10.0, var=50.0)),
+    Case("gamma",          Gamma,              (mean=0.5,  var=0.1)),
+    Case("exponential",    Exponential,        (mean=3.0,  var=9.0)),
+    Case("erlang",         Erlang,             (mean=4.0,  var=4.0)),  # k=4, θ=1
+    Case("lognormal",      LogNormal,          (mean=5.0,  var=3.0)),
+    Case("lognormal",      LogNormal,          (mean=2.0,  var=10.0)),
+    Case("weibull",        Weibull,            (mean=5.0,  var=3.0)),
+    Case("weibull",        Weibull,            (mean=2.0,  var=10.0)),
+    Case("frechet",        Frechet,            (mean=5.0,  var=3.0)),
+    Case("rayleigh",       Rayleigh,           (mean=5.0,  var=5.0^2 * (4-π)/π)),
+    Case("inverse_gamma",  InverseGamma,       (mean=5.0,  var=3.0)),
+    Case("pareto",         Pareto,             (mean=5.0,  var=3.0)),
+    Case("folded_normal",  FoldedNormal,       (mean=2.5,  var=1.2)),
+    Case("fdist",          FDist,              (mean=1.5,  var=10.0)),
+    Case("chi",            Chi,                # Build a known feasible point from nu=4
+                                                (mean=mean(Chi(4)), var=var(Chi(4)))),
+    Case("chisq",          Chisq,              (mean=4.0,  var=8.0)),
+
+    # Unit-interval continuous
+    Case("beta",           Beta,               (mean=0.5,  var=0.05)),
+    Case("beta",           Beta,               (mean=0.3,  var=0.02)),
+    Case("beta",           Beta,               (mean=0.8,  var=0.04)),
+
+    # Discrete
+    Case("binomial",       Binomial,           (mean=5.0,  var=2.5)),
+    Case("poisson",        Poisson,            (mean=5.0,  var=5.0)),
+    Case("negative_binomial", NegativeBinomial,(mean=5.0,  var=8.0)),
+    Case("geometric",      Geometric,          (mean=2.0,  var=2.0*(1+2.0))),
+    Case("discrete_uniform", DiscreteUniform,  (mean=5.0,  var=10.0)),
+
+    # Two-quantile constructions
+    Case("normal",         Normal,             (q1=-1.0,   q3=1.0)),
+    Case("logistic",       Logistic,           (q1=-1.0,   q3=1.0)),
+    Case("laplace",        Laplace,            (q1=-1.0,   q3=1.0)),
+    Case("lognormal",      LogNormal,          (quantiles=[(0.1, 1.0), (0.9, 10.0)],)),
+    Case("weibull",        Weibull,            (quantiles=[(0.1, 1.0), (0.9, 5.0)],)),
+    Case("pareto",         Pareto,             (quantiles=[(0.1, 1.0), (0.9, 10.0)],)),
+    Case("gamma",          Gamma,              (q1=2.0,    q3=8.0)),
+    Case("beta",           Beta,               (q1=0.3,    q3=0.7)),
+
+    # Mean + quantile
+    Case("gamma",          Gamma,              (mean=5.0,  median=4.5)),
+    Case("beta",           Beta,               (mean=0.4,  median=0.38)),
+    Case("lognormal",      LogNormal,          (mean=3.0,  median=2.5)),
+
+    # Mode-based
+    Case("gamma",          Gamma,              (mean=5.0,  mode=3.0)),
+    Case("gamma",          Gamma,              (mode=3.0,  iqr=4.0)),
+    Case("beta",           Beta,               (mean=0.4,  mode=0.35)),
+    Case("rayleigh",       Rayleigh,           (mode=2.0,)),
+    Case("normal",         Normal,             (mode=3.0,  var=4.0)),
+
+    # 1-parameter from mean
+    Case("exponential",    Exponential,        (mean=3.0,)),
+    Case("poisson",        Poisson,            (mean=5.0,)),
+    Case("rayleigh",       Rayleigh,           (mean=5.0,)),
+    Case("geometric",      Geometric,          (mean=3.0,)),
+
+    # Single-quantile
+    Case("exponential",    Exponential,        (median=2.0,)),
+    Case("rayleigh",       Rayleigh,           (median=2.0,)),
+]
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+# Translate a Julia kwarg name/value to its JSON-canonical form for Python.
+# Tuples in `quantiles` need explicit listification.
+function _kwargs_to_json(kw::NamedTuple)
+    out = Dict{String,Any}()
+    for (k, v) in pairs(kw)
+        key = String(k)
+        if v isa AbstractVector && eltype(v) <: Tuple
+            out[key] = [collect(t) for t in v]
+        elseif v isa Tuple
+            out[key] = collect(v)
+        else
+            out[key] = v
+        end
+    end
+    return out
+end
+
+# For a Julia distribution, return basic moments + a small ppf table.
+# Discrete distributions skip ppf (scipy and Julia disagree on ties; not a
+# bug, just a parameterization detail).
+_safe(x) = isfinite(x) ? x : (isnan(x) ? "nan" : (x > 0 ? "inf" : "-inf"))
+
+function _dist_summary(d)
+    info = Dict{String,Any}(
+        "mean" => _safe(mean(d)),
+        "var"  => _safe(var(d)),
+        "discrete" => d isa DiscreteUnivariateDistribution,
+    )
+    if !(d isa DiscreteUnivariateDistribution)
+        info["ppf"] = Dict(
+            "0.1" => _safe(quantile(d, 0.1)),
+            "0.5" => _safe(quantile(d, 0.5)),
+            "0.9" => _safe(quantile(d, 0.9)),
+        )
+    end
+    return info
+end
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+function build(output_path)
+    records = []
+    for case in CASES
+        d = make_dist(case.julia_type; case.kwargs...)
+        push!(records, Dict(
+            "py_name" => case.py_name,
+            "julia_type" => string(case.julia_type),
+            "kwargs" => _kwargs_to_json(case.kwargs),
+            "expected" => _dist_summary(d),
+        ))
+    end
+
+    mkpath(dirname(output_path))
+    open(output_path, "w") do io
+        JSON3.pretty(io, records)
+    end
+
+    @info "Wrote $(length(records)) cases to $output_path"
+end
+
+# Run
+let
+    here = @__DIR__
+    default_out = normpath(joinpath(here, "..", "tests", "data", "cross_oracle.json"))
+    out = length(ARGS) >= 1 ? ARGS[1] : default_out
+    build(out)
+end
