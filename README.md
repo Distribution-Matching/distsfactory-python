@@ -247,11 +247,19 @@ julia --project=../DistributionsFactories.jl scripts/build_cross_oracle.jl
 
 ## Installation
 
-Not yet published. Development install:
+```
+pip install distsfactory
+```
+
+Requires Python ≥ 3.10. Pulls in `scipy >= 1.11` and `numpy >= 1.24`.
+
+Development install:
 
 ```
 pip install -e ".[dev]"
 ```
+
+Releases are cut from a git tag; see [PUBLISHING.md](PUBLISHING.md).
 
 ## Known residuals (parity with Julia)
 

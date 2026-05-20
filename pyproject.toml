@@ -1,34 +1,68 @@
 [build-system]
-requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "distsfactory"
 version = "0.1.0"
-description = "Construct probability distributions from partial specifications (moments, quantiles, mode, etc.)"
+description = "Construct probability distributions from partial specifications (moments, quantiles, mode, support)."
 readme = "README.md"
 license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [
     { name = "Ron Ashri" },
     { name = "Sarat Moka" },
     { name = "Yoni Nazarathy", email = "yoni@accumulationpoint.com" },
 ]
+keywords = [
+    "statistics",
+    "probability",
+    "distributions",
+    "scipy",
+    "moment-matching",
+    "feasibility",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
+]
 dependencies = [
     "scipy>=1.11",
     "numpy>=1.24",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Distribution-Matching/distsfactory-python"
+Repository = "https://github.com/Distribution-Matching/distsfactory-python"
+Issues = "https://github.com/Distribution-Matching/distsfactory-python/issues"
+"Julia sibling" = "https://github.com/Distribution-Matching/DistributionsFactories.jl"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "build>=1.0",
+    "twine>=5.0",
 ]
 docs = [
     "mkdocs>=1.5",
     "mkdocs-material>=9.0",
     "mkdocstrings[python]>=0.24",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

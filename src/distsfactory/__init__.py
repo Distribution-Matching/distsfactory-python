@@ -1,6 +1,11 @@
 """distsfactory: Construct probability distributions from partial specifications."""
 
-__version__ = "0.1.0"
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
+
+try:
+    __version__ = _pkg_version("distsfactory")
+except PackageNotFoundError:  # editable / source checkout without install
+    __version__ = "0.0.0+unknown"
 
 from ._api import make_dist, dist_exists, available_distributions
 from ._partial import PartialDist, partial_dist

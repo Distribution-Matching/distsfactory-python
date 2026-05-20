@@ -1,6 +1,6 @@
 site_name: distsfactory
 site_description: Construct probability distributions from partial specifications
-repo_url: https://github.com/yoninazarathy/distsfactory-python
+repo_url: https://github.com/Distribution-Matching/distsfactory-python
 
 theme:
   name: material
