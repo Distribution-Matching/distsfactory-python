@@ -45,7 +45,7 @@ Whenever scipy provides a native truncated form (`truncnorm`, `truncexpon`, …)
 
 ## Supported distributions
 
-27 families across continuous (real, positive, unit) and discrete supports. Each family supports a subset of specification types — `mean+var` is universal; quantile- and mode-based forms are implemented where they exist in the Julia package.
+30 families across continuous (real, positive, unit) and discrete supports. Each family supports a subset of specification types — `mean+var` is universal; quantile- and mode-based forms are implemented where they exist in the Julia package.
 
 ### Continuous on `(-∞, ∞)`
 

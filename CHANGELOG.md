@@ -37,7 +37,7 @@ First public release. Python port of [DistributionsFactories.jl](https://github.
 
 ### Coverage
 
-- **27 distribution families** across real, positive, unit, and integer supports.
+- **30 distribution families** across real, positive, unit, and integer supports.
 - **Specification styles**: moments (`mean`/`var`/`std`/`cv`/`scv`/`second_moment`), quantiles (`median`/`q1`/`q3`/`iqr`/`quantiles`), mode (combined with moments or quantiles).
 - **`support=`** kwarg places a distribution on an arbitrary interval via affine transform or truncation. Returns native scipy `truncnorm` / `truncexpon` / `truncpareto` / `truncweibull_min` when available, otherwise a thin wrapper.
 - **`partial_dist`** pins some scipy parameters and solves the rest from moment constraints (1D brentq / 2D damped Newton).
