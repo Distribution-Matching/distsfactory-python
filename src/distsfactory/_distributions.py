@@ -187,7 +187,7 @@ class CauchyDist:
     @staticmethod
     def from_mean_var(mu, var):
         require_mean_var("cauchy", mu, var)
-        raise AssertionError("unreachable: cauchy always rejects mean-var")
+        raise RuntimeError("unreachable: cauchy always rejects mean-var")
 
     @staticmethod
     def from_two_quantiles(p1, q1, p2, q2):
@@ -772,7 +772,7 @@ def _solve_folded_normal(target_mu, target_var, maxiter=200, tol=1e-10):
                 F_new = F(x_new)
                 if np.all(np.isfinite(F_new)) and np.max(np.abs(F_new)) < np.max(np.abs(Fx)):
                     break
-            except Exception:
+            except (ArithmeticError, ValueError, RuntimeError):
                 pass
             step *= 0.5
         x = x + step * dx

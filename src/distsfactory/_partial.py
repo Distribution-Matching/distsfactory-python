@@ -19,7 +19,7 @@ requested moments. No per-distribution code is needed beyond the family's
 
 import math
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict
 
 import numpy as np
 
@@ -100,7 +100,7 @@ def _moments(scipy_dist, fixed, free_names, x):
     try:
         d = _build(scipy_dist, fixed, free_names, x)
         return float(d.mean()), float(d.var())
-    except Exception:
+    except (ArithmeticError, ValueError, RuntimeError):
         return float("nan"), float("nan")
 
 
@@ -153,7 +153,7 @@ def _bracketed_brentq(f, x0=1.0):
     for a, b in candidates:
         try:
             fa, fb = f(a), f(b)
-        except Exception:
+        except (ArithmeticError, ValueError, RuntimeError):
             continue
         if np.isfinite(fa) and np.isfinite(fb) and fa * fb < 0:
             return brentq(f, a, b)

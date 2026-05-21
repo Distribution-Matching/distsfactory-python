@@ -2,7 +2,7 @@
 
 import math
 
-from ._registry import resolve_dist, DISTRIBUTIONS, SUPPORT_TYPE
+from ._registry import resolve_dist, SUPPORT_TYPE
 from ._distributions import DIST_HANDLERS
 from ._feasibility import (
     exists_mean_var as _exists_mean_var,

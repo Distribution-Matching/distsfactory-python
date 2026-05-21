@@ -304,7 +304,7 @@ def solve_truncated_generic(name, lo, hi, mu, var, maxiter=200, tol=1e-10, h=1e-
     # iterate from there. Use the canonical from_mean_var when feasible.
     try:
         seed = handler.from_mean_var(mu, var)
-    except Exception:
+    except (ArithmeticError, ValueError, RuntimeError):
         # If the target falls outside the natural-support feasibility region,
         # we still try with a seed that's known-valid for the family.
         seed = handler.from_mean_var(mu if mu > 0 else 1.0, max(var, 1e-3))
