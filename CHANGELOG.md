@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.2.0 — 2026-05-21
+
+### Public `.parent` accessor on the truncation / flip wrappers
+
+The fallback wrapper classes `_TruncatedDist` and `_FlippedDist` (used when scipy
+doesn't ship a native truncated form, e.g. truncated Laplace) now expose the
+underlying distribution as `.parent`. The older `._inner` attribute is preserved
+as a property alias so any existing code keeps working.
+
+```python
+d = make_dist("laplace", mean=2.0, var=4.0, support=(0.0, math.inf))
+d.mean()        # 2.0 — the truncated dist's actual mean
+d.parent        # the un-truncated Laplace (frozen scipy distribution)
+d.parent.kwds   # {'loc': ..., 'scale': ...}
+d._inner        # same as d.parent — kept for back-compat
+```
+
+`_TruncatedDist` also gains `.support_interval`, returning `(lo, hi)` as a tuple
+(mirrors the data the existing `.support()` method already returned).
+
+This matches the R sibling package's 0.2.0 `$parent` / `$support` accessor surface.
+Scipy-native truncated distributions (e.g. truncnorm, truncexpon) were already
+clean — they use `(a, b, loc, scale)` kwarg names that don't collide with
+`mean`/`var`/`std`/`median` method names, so this change only affects the
+fallback wrappers.
+
+### Other
+
+- 8 new regression tests in `tests/test_wrapper_accessors.py`. 582 tests pass
+  (was 574).
+
 ## 0.1.0 — 2026-05-21
 
 First public release. Python port of [DistributionsFactories.jl](https://github.com/Distribution-Matching/DistributionsFactories.jl) (Julia is the parameterization master).

@@ -54,41 +54,50 @@ class _FlippedDist:
     Implements the methods we expect from a frozen scipy distribution
     (``mean``, ``var``, ``std``, ``pdf``, ``cdf``, ``ppf``, ``rvs``, ``support``).
     Used for placing positive-support distributions on ``(-∞, b]``.
+
+    The un-flipped distribution is reachable as ``.parent`` (mirrors the R
+    sibling package's ``$parent`` accessor on wrapped distributions). The
+    older ``._inner`` name is retained as an alias for backwards compatibility.
     """
 
     def __init__(self, b, inner):
         self.b = float(b)
-        self._inner = inner
+        self.parent = inner
+
+    @property
+    def _inner(self):
+        """Backwards-compatible alias for ``.parent``. Prefer ``.parent``."""
+        return self.parent
 
     def __repr__(self):
-        return f"FlippedDist(b={self.b}, inner={self._inner})"
+        return f"FlippedDist(b={self.b}, parent={self.parent})"
 
     def mean(self):
-        return self.b - self._inner.mean()
+        return self.b - self.parent.mean()
 
     def var(self):
-        return self._inner.var()
+        return self.parent.var()
 
     def std(self):
-        return self._inner.std()
+        return self.parent.std()
 
     def pdf(self, x):
-        return self._inner.pdf(self.b - x)
+        return self.parent.pdf(self.b - x)
 
     def cdf(self, x):
-        return 1.0 - self._inner.cdf(self.b - x)
+        return 1.0 - self.parent.cdf(self.b - x)
 
     def sf(self, x):
-        return self._inner.cdf(self.b - x)
+        return self.parent.cdf(self.b - x)
 
     def ppf(self, q):
-        return self.b - self._inner.ppf(1.0 - q)
+        return self.b - self.parent.ppf(1.0 - q)
 
     def rvs(self, size=None, random_state=None):
-        return self.b - self._inner.rvs(size=size, random_state=random_state)
+        return self.b - self.parent.rvs(size=size, random_state=random_state)
 
     def support(self):
-        lo, hi = self._inner.support()
+        lo, hi = self.parent.support()
         return (self.b - hi, self.b - lo)
 
 
@@ -156,15 +165,22 @@ def _discrete_affine_shift(name, mu, var, a):
 # ---------------------------------------------------------------------------
 
 class _TruncatedDist:
-    """Frozen-like wrapper representing the truncation of ``inner`` to ``[lo, hi]``.
+    """Frozen-like wrapper representing the truncation of a parent dist to ``[lo, hi]``.
 
     Useful when scipy lacks a dedicated truncated form for the family. The
-    underlying ``inner`` distribution is used as-is for the un-truncated pdf;
-    we renormalize by ``inner.cdf(hi) - inner.cdf(lo)``.
+    parent distribution is used as-is for the un-truncated pdf; we
+    renormalize by ``parent.cdf(hi) - parent.cdf(lo)``.
+
+    The un-truncated parent is reachable as ``.parent`` (mirrors the R
+    sibling package's ``$parent`` accessor on wrapped distributions). The
+    older ``._inner`` name is retained as an alias for backwards compatibility.
+    The truncation endpoints are available individually as ``.lo``/``.hi`` and
+    as a tuple via ``.support_interval`` (the ``.support()`` method matches
+    scipy's frozen-distribution convention by returning the same tuple).
     """
 
     def __init__(self, inner, lo, hi):
-        self._inner = inner
+        self.parent = inner
         self.lo = float(lo)
         self.hi = float(hi)
         self._discrete = hasattr(inner, "pmf")
@@ -180,16 +196,26 @@ class _TruncatedDist:
                 f"Truncated distribution: truncation mass is zero on [{lo}, {hi}]"
             )
 
+    @property
+    def _inner(self):
+        """Backwards-compatible alias for ``.parent``. Prefer ``.parent``."""
+        return self.parent
+
+    @property
+    def support_interval(self):
+        """``(lo, hi)`` tuple. Same data as the ``support()`` method."""
+        return (self.lo, self.hi)
+
     def __repr__(self):
-        return f"TruncatedDist(inner={self._inner}, lo={self.lo}, hi={self.hi})"
+        return f"TruncatedDist(parent={self.parent}, lo={self.lo}, hi={self.hi})"
 
     def pdf(self, x):
         x = _scalar_or_array(x)
         in_support = (x >= self.lo) & (x <= self.hi)
         if self._discrete:
-            out = self._inner.pmf(x) / self._Z
+            out = self.parent.pmf(x) / self._Z
         else:
-            out = self._inner.pdf(x) / self._Z
+            out = self.parent.pdf(x) / self._Z
         return _where_zero(in_support, out)
 
     def pmf(self, x):
@@ -200,7 +226,7 @@ class _TruncatedDist:
     def cdf(self, x):
         x = _scalar_or_array(x)
         clipped = _clip(x, self.lo, self.hi)
-        return (self._inner.cdf(clipped) - self._inner.cdf(self.lo)) / self._Z
+        return (self.parent.cdf(clipped) - self.parent.cdf(self.lo)) / self._Z
 
     def sf(self, x):
         return 1.0 - self.cdf(x)
@@ -208,15 +234,15 @@ class _TruncatedDist:
     def ppf(self, q):
         import numpy as np
         q = np.asarray(q)
-        F_lo = self._inner.cdf(self.lo)
-        return self._inner.ppf(F_lo + q * self._Z)
+        F_lo = self.parent.cdf(self.lo)
+        return self.parent.ppf(F_lo + q * self._Z)
 
     def rvs(self, size=None, random_state=None):
         # Inverse-CDF sampling from a uniform on [F(lo), F(hi)].
         import numpy as np
         U = stats.uniform.rvs(size=size, random_state=random_state)
-        F_lo = self._inner.cdf(self.lo)
-        return self._inner.ppf(F_lo + U * self._Z)
+        F_lo = self.parent.cdf(self.lo)
+        return self.parent.ppf(F_lo + U * self._Z)
 
     def mean(self):
         if self._discrete:
@@ -224,10 +250,10 @@ class _TruncatedDist:
             hi_i = int(math.floor(self.hi))
             m = 0.0
             for k in range(lo_i, hi_i + 1):
-                m += k * self._inner.pmf(k) / self._Z
+                m += k * self.parent.pmf(k) / self._Z
             return m
         from scipy.integrate import quad
-        m, _ = quad(lambda x: x * self._inner.pdf(x), self.lo, self.hi)
+        m, _ = quad(lambda x: x * self.parent.pdf(x), self.lo, self.hi)
         return m / self._Z
 
     def var(self):
@@ -236,13 +262,13 @@ class _TruncatedDist:
             hi_i = int(math.floor(self.hi))
             m, m2 = 0.0, 0.0
             for k in range(lo_i, hi_i + 1):
-                pk = self._inner.pmf(k) / self._Z
+                pk = self.parent.pmf(k) / self._Z
                 m += k * pk
                 m2 += k * k * pk
             return m2 - m * m
         from scipy.integrate import quad
-        m, _ = quad(lambda x: x * self._inner.pdf(x), self.lo, self.hi)
-        m2, _ = quad(lambda x: x ** 2 * self._inner.pdf(x), self.lo, self.hi)
+        m, _ = quad(lambda x: x * self.parent.pdf(x), self.lo, self.hi)
+        m2, _ = quad(lambda x: x ** 2 * self.parent.pdf(x), self.lo, self.hi)
         return m2 / self._Z - (m / self._Z) ** 2
 
     def std(self):

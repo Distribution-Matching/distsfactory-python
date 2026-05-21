@@ -203,7 +203,7 @@ def solve_truncated_tdist_half(df, lo, hi, mu, var, maxiter=200, tol=1e-10, h=1e
         d_ref = solve_truncated_tdist_half(df, -hi, math.inf, -mu, var,
                                             maxiter=maxiter, tol=tol, h=h)
         # d_ref is _TruncatedDist; reflect its parent.
-        parent_ref = d_ref._inner
+        parent_ref = d_ref.parent
         loc_ref, scale_ref = parent_ref.kwds["loc"], parent_ref.kwds["scale"]
         parent = stats.t(df=df, loc=-loc_ref, scale=scale_ref)
         from ._support import _TruncatedDist
